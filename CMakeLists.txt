@@ -57,15 +57,17 @@ install(TARGETS ${PROJECT_NAME}
 		EXPORT ${PROJECT_NAME}_Targets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+		)
 
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
 		"${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
 		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-		INSTALL_DESTINATION
-		${daw-gumbo-pp_INSTALL_CMAKEDIR})
+		INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
+)
 
 write_basic_package_version_file("${PROJECT_NAME}ConfigVersion.cmake"
 		VERSION ${PROJECT_VERSION}
@@ -74,11 +76,13 @@ write_basic_package_version_file("${PROJECT_NAME}ConfigVersion.cmake"
 install(EXPORT ${PROJECT_NAME}_Targets
 		FILE ${PROJECT_NAME}Targets.cmake
 		NAMESPACE daw::
-		DESTINATION ${daw-gumbo-pp_INSTALL_CMAKEDIR})
+		DESTINATION lib/cmake/${PROJECT_NAME}
+		)
 
 install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
 		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-		DESTINATION ${daw-gumbo-pp_INSTALL_CMAKEDIR})
+		DESTINATION lib/cmake/${PROJECT_NAME}
+		)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include/)
 
