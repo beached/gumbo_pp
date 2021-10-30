@@ -41,11 +41,11 @@ include_directories(SYSTEM ${GUMBO_INCLUDE_DIRS})
 include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} src/gumbo_pp.cpp)
-target_include_directories(${PROJECT_NAME} INTERFACE ${GUMBO_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${GUMBO_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
 add_library(daw::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} INTERFACE daw::daw-header-libraries ${GUMBO_LIBRARY_FILE})
+target_link_libraries(${PROJECT_NAME} PUBLIC daw::daw-header-libraries ${GUMBO_LIBRARY_FILE})
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 target_include_directories(${PROJECT_NAME}
