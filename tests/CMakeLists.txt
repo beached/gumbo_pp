@@ -9,7 +9,7 @@ add_library( gumbo-pp_test INTERFACE )
 if (DAW_USE_PACKAGE_MANAGEMENT)
     target_link_libraries(gumbo-pp_test INTERFACE ${COMPILER_SPECIFIC_LIBS})
 else ()
-    target_link_libraries(gumbo-pp_test INTERFACE daw::daw-header-libraries daw::gumbo-pp ${COMPILER_SPECIFIC_LIBS})
+    target_link_libraries(gumbo-pp_test INTERFACE daw::daw-header-libraries daw::daw-gumbo-pp ${COMPILER_SPECIFIC_LIBS})
 endif ()
 
 target_include_directories(gumbo-pp_test INTERFACE include/)

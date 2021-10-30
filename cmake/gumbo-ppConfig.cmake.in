@@ -1,8 +1,0 @@
-@PACKAGE_INIT@
-
-include(CMakeFindDependencyMacro)
-find_dependency( daw-header-libraries )
-
-include("${CMAKE_CURRENT_LIST_DIR}/gumbo-pp-linkTargets.cmake")
-
-check_required_components( gumbo-pp )
