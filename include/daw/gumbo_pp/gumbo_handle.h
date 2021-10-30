@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "details/gumbo_pp.h"
+
 #include <gumbo.h>
 #include <memory>
 

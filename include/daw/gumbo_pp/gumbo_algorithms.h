@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "details/gumbo_pp.h"
 #include "gumbo_node_iterator.h"
 
 #include <daw/daw_move.h>

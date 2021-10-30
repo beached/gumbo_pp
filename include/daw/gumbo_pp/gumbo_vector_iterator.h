@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "details/gumbo_pp.h"
+
 #include <daw/daw_not_null.h>
 
 #include <cstddef>

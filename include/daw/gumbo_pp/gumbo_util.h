@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "details/gumbo_pp.h"
 #include "gumbo_vector_iterator.h"
 
 #include <daw/daw_string_view.h>
