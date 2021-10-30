@@ -13,4 +13,9 @@
 #include <daw/gumbo_pp/gumbo_util.h>
 
 int main( ) {
+	std::string const html = "<html></html>";
+	daw::gumbo::GumboHandle output =
+	  gumbo_parse_with_options( &kGumboDefaultOptions,
+	                            html.c_str( ),
+	                            html.size( ) );
 }
