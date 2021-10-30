@@ -36,13 +36,14 @@ endif ()
 find_path(GUMBO_INCLUDE_DIRS "gumbo.h")
 find_library(GUMBO_LIBRARY_FILE gumbo)
 
+include_directories(SYSTEM ${GUMBO_INCLUDE_DIRS})
+
 include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(daw::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME} INTERFACE daw::daw-header-libraries ${GUMBO_LIBRARY_FILE})
-target_include_directories(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${GUMBO_INCLUDE_DIRS}>)
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 target_include_directories(${PROJECT_NAME}
