@@ -21,12 +21,6 @@ option(DAW_ENABLE_TESTING "Build tests and examples" OFF)
 
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
-set(daw-gumbo-pp_INSTALL_CMAKEDIR
-		"${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake"
-		CACHE STRING
-		"The install directory to use for CMake package config files")
-
-
 if (NOT DAW_USE_PACKAGE_MANAGEMENT)
 	add_subdirectory(extern)
 else ()
