@@ -44,7 +44,7 @@ add_library(${PROJECT_NAME} src/gumbo_pp.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
 add_library(daw::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} daw::daw-header-libraries ${GUMBO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC daw::daw-header-libraries ${GUMBO_LIBRARIES})
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 target_include_directories(${PROJECT_NAME}
