@@ -5,14 +5,19 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 #add_subdirectory(extern)
 
+add_library( gumbo-pp_test INTERFACE )
 if (DAW_USE_PACKAGE_MANAGEMENT)
-    target_link_libraries(gumbo_pp_test PUBLIC ${COMPILER_SPECIFIC_LIBS})
+    target_link_libraries(gumbo-pp_test INTERFACE ${COMPILER_SPECIFIC_LIBS})
 else ()
-    target_link_libraries(gumbo_pp_test PUBLIC daw::daw-header-libraries daw::gumbo_pp ${COMPILER_SPECIFIC_LIBS})
+    target_link_libraries(gumbo-pp_test INTERFACE daw::daw-header-libraries daw::gumbo-pp ${COMPILER_SPECIFIC_LIBS})
 endif ()
 
-target_include_directories(gumbo_pp_test PUBLIC include/)
-target_compile_features(gumbo_pp_test PUBLIC cxx_std_17)
+target_include_directories(gumbo-pp_test INTERFACE include/)
+target_compile_features(gumbo-pp_test INTERFACE cxx_std_17)
 
 add_custom_target(${PROJECT_NAME}_full)
+
+add_executable( test_bin src/test.cpp )
+target_link_libraries( test_bin gumbo-pp_test )
+add_test( test_test test_bin )
 
