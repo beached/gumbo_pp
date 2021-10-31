@@ -7,11 +7,9 @@
 //
 //
 
-#include <daw/gumbo_pp/gumbo_algorithms.h>
-#include <daw/gumbo_pp/gumbo_handle.h>
-#include <daw/gumbo_pp/gumbo_node_iterator.h>
-#include <daw/gumbo_pp/gumbo_util.h>
+#include <daw/gumbo_pp.h>
 
+#include <cassert>
 #include <iostream>
 
 int main( ) {
@@ -46,4 +44,15 @@ int main( ) {
 		std::cout << "Class hello outer text: "
 		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
 	}
+
+	daw::gumbo::selector sel( output->root, { } );
+	auto a =
+	  sel.select( daw::gumbo::select_tag<daw::gumbo::select_type::all> ).size( );
+	assert( sel.select( daw::gumbo::select_tag<daw::gumbo::select_type::all> )
+	          .size( ) == 11 );
+	assert( sel
+	          .select( daw::gumbo::select_tag<daw::gumbo::select_type::contains>,
+	                   "class",
+	                   "hel" )
+	          .size( ) == 1 );
 }

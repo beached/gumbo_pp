@@ -29,7 +29,7 @@ endif ()
 
 find_package(PkgConfig REQUIRED)
 
-#pkg_search_module(GUMBO gumbo)
+pkg_search_module(GUMBO gumbo)
 if (NOT GUMBO_FOUND)
 	# VCPKG has no cmake or pkg config files for gumbo
 	find_path(GUMBO_INCLUDE_DIRS "gumbo.h" REQUIRED)
@@ -42,7 +42,7 @@ link_directories( ${GUMBO_LIBRARY_DIRS} )
 
 include(GNUInstallDirs)
 
-add_library(${PROJECT_NAME} src/gumbo_pp.cpp)
+add_library(${PROJECT_NAME} src/gumbo_pp.cpp )
 add_library(daw::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include/)

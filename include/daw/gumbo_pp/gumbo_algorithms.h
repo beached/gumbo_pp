@@ -66,8 +66,8 @@ namespace daw::gumbo {
 	}
 
 	struct attribute_search_result_t {
-		gumbo_node_iterator_t position;
-		unsigned attribute_position;
+		gumbo_node_iterator_t iter;
+		unsigned attrib_pos;
 	};
 
 	inline attribute_search_result_t
@@ -97,16 +97,36 @@ namespace daw::gumbo {
 	                              daw::string_view attribute_value,
 	                              Compare cmp = { } ) {
 		auto sresult = find_node_by_attribute_name( first, last, attribute_name );
-		first = sresult.position;
+		first = sresult.iter;
 		while( first != last ) {
-			auto &attr = *get_attribute_node_at( *first, sresult.attribute_position );
+			auto &attr = *get_attribute_node_at( *first, sresult.attrib_pos );
 			if( cmp( attr.value, attribute_value ) ) {
 				return first;
 			}
 			++first;
 			sresult = find_node_by_attribute_name( first, last, attribute_name );
-			first = sresult.position;
+			first = sresult.iter;
 		}
 		return first;
+	}
+
+	template<typename Predicate>
+	attribute_search_result_t
+	find_node_by_attribute_if( gumbo_node_iterator_t first,
+	                           gumbo_node_iterator_t last,
+	                           Predicate pred ) {
+		while( first != last ) {
+			if( first->type == GumboNodeType::GUMBO_NODE_ELEMENT ) {
+				auto const attr_count = get_attribute_count( *first );
+				for( unsigned n = 0; n < attr_count; ++n ) {
+					auto *attr = get_attribute_node_at( *first, n );
+					if( pred( *attr ) ) {
+						return { first, n };
+					}
+				}
+			}
+			++first;
+		}
+		return { first, 0 };
 	}
 } // namespace daw::gumbo
