@@ -49,40 +49,6 @@ namespace daw::gumbo {
 			return m_node;
 		}
 
-	private:
-		[[nodiscard]] static pointer
-		get_child_node_at( daw::not_null<pointer> node,
-		                   std::size_t index ) noexcept {
-			switch( node->type ) {
-			case GumboNodeType::GUMBO_NODE_ELEMENT: {
-				pointer *const ary =
-				  reinterpret_cast<pointer *>( node->v.element.children.data );
-				pointer result = ary[index];
-				return result;
-			}
-			case GumboNodeType::GUMBO_NODE_DOCUMENT: {
-				pointer *const ary =
-				  reinterpret_cast<pointer *>( node->v.document.children.data );
-				pointer result = ary[index];
-				return result;
-			}
-			default:
-				return nullptr;
-			}
-		}
-
-		[[nodiscard]] static std::size_t
-		get_children_count( daw::not_null<pointer> node ) noexcept {
-			switch( node->type ) {
-			case GumboNodeType::GUMBO_NODE_ELEMENT:
-				return node->v.element.children.length;
-			case GumboNodeType::GUMBO_NODE_DOCUMENT:
-				return node->v.document.children.length;
-			default:
-				return 0;
-			}
-		}
-
 	public:
 		constexpr gumbo_node_iterator_t &operator++( ) & {
 			// iterate to lowest indexed child, then next children if any.  If no more
@@ -93,8 +59,8 @@ namespace daw::gumbo {
 			daw::not_null<pointer> cur_node = m_node;
 			// Check if we have any children.  Will always be first because they will
 			// iterate through their parents children
-			if( get_children_count( cur_node ) > 0 ) {
-				if( pointer child_node = get_child_node_at( cur_node, 0 );
+			if( get_children_count( *cur_node ) > 0 ) {
+				if( pointer child_node = get_child_node_at( *cur_node, 0 );
 				    child_node ) {
 					m_node = child_node;
 					return *this;
@@ -110,10 +76,10 @@ namespace daw::gumbo {
 				}
 				daw::not_null<pointer> parent = cur_node->parent;
 				auto cur_idx = cur_node->index_within_parent;
-				auto const max_idx = get_children_count( parent );
+				auto const max_idx = get_children_count( *parent );
 				if( cur_idx + 1 < max_idx ) {
 					// Parent node has more children left, choose next one
-					pointer next_child = get_child_node_at( parent, cur_idx + 1 );
+					pointer next_child = get_child_node_at( *parent, cur_idx + 1 );
 					assert( next_child );
 					m_node = next_child;
 					return *this;
