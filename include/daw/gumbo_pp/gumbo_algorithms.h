@@ -65,4 +65,48 @@ namespace daw::gumbo {
 		  DAW_MOVE( onEach ) );
 	}
 
+	struct attribute_search_result_t {
+		gumbo_node_iterator_t position;
+		unsigned attribute_position;
+	};
+
+	inline attribute_search_result_t
+	find_node_by_attribute_name( gumbo_node_iterator_t first,
+	                             gumbo_node_iterator_t last,
+	                             daw::string_view attribute_name ) {
+		while( first != last ) {
+			if( first->type == GumboNodeType::GUMBO_NODE_ELEMENT ) {
+				auto const attr_count = get_attribute_count( *first );
+				for( unsigned n = 0; n < attr_count; ++n ) {
+					auto *attr = get_attribute_node_at( *first, n );
+					if( attr and daw::string_view( attr->name ) == attribute_name ) {
+						return { first, n };
+					}
+				}
+			}
+			++first;
+		}
+		return { first, 0 };
+	}
+
+	template<typename Compare = std::equal_to<>>
+	gumbo_node_iterator_t
+	find_node_by_attribute_value( gumbo_node_iterator_t first,
+	                              gumbo_node_iterator_t last,
+	                              daw::string_view attribute_name,
+	                              daw::string_view attribute_value,
+	                              Compare cmp = { } ) {
+		auto sresult = find_node_by_attribute_name( first, last, attribute_name );
+		first = sresult.position;
+		while( first != last ) {
+			auto &attr = *get_attribute_node_at( *first, sresult.attribute_position );
+			if( cmp( attr.value, attribute_value ) ) {
+				return first;
+			}
+			++first;
+			sresult = find_node_by_attribute_name( first, last, attribute_name );
+			first = sresult.position;
+		}
+		return first;
+	}
 } // namespace daw::gumbo

@@ -69,6 +69,44 @@ namespace daw::gumbo {
 		}
 	}
 
+	[[nodiscard]] inline GumboAttribute *
+	get_attribute_node_at( GumboNode &node, std::size_t index ) noexcept {
+		switch( node.type ) {
+		case GumboNodeType::GUMBO_NODE_ELEMENT: {
+			GumboAttribute **const ary =
+			  reinterpret_cast<GumboAttribute **>( node.v.element.attributes.data );
+			GumboAttribute *result = ary[index];
+			return result;
+		}
+		default:
+			return nullptr;
+		}
+	}
+
+	[[nodiscard]] inline GumboAttribute const *
+	get_attribute_node_at( GumboNode const &node, std::size_t index ) noexcept {
+		switch( node.type ) {
+		case GumboNodeType::GUMBO_NODE_ELEMENT: {
+			GumboAttribute **const ary =
+			  reinterpret_cast<GumboAttribute **>( node.v.element.attributes.data );
+			GumboAttribute *result = ary[index];
+			return result;
+		}
+		default:
+			return nullptr;
+		}
+	}
+
+	[[nodiscard]] constexpr std::size_t
+	get_attribute_count( GumboNode const &node ) noexcept {
+		switch( node.type ) {
+		case GumboNodeType::GUMBO_NODE_ELEMENT:
+			return node.v.element.attributes.length;
+		default:
+			return 0;
+		}
+	}
+
 	template<typename Visitor>
 	constexpr decltype( auto ) visit( GumboNode &node, Visitor vis ) {
 		switch( node.type ) {
@@ -76,11 +114,7 @@ namespace daw::gumbo {
 			return vis( node.v.document );
 		case GumboNodeType::GUMBO_NODE_ELEMENT:
 			return vis( node.v.element );
-		case GumboNodeType::GUMBO_NODE_TEXT:
-		case GumboNodeType::GUMBO_NODE_CDATA:
-		case GumboNodeType::GUMBO_NODE_COMMENT:
-		case GumboNodeType::GUMBO_NODE_WHITESPACE:
-		case GumboNodeType::GUMBO_NODE_TEMPLATE:
+		default:
 			return vis( node.v.text );
 		}
 	}
@@ -92,11 +126,7 @@ namespace daw::gumbo {
 			return vis( node.v.document );
 		case GumboNodeType::GUMBO_NODE_ELEMENT:
 			return vis( node.v.element );
-		case GumboNodeType::GUMBO_NODE_TEXT:
-		case GumboNodeType::GUMBO_NODE_CDATA:
-		case GumboNodeType::GUMBO_NODE_COMMENT:
-		case GumboNodeType::GUMBO_NODE_WHITESPACE:
-		case GumboNodeType::GUMBO_NODE_TEMPLATE:
+		default:
 			return vis( node.v.text );
 		}
 	}
@@ -119,11 +149,6 @@ namespace daw::gumbo {
 				}
 			}
 			break;
-		case GumboNodeType::GUMBO_NODE_TEXT:
-		case GumboNodeType::GUMBO_NODE_CDATA:
-		case GumboNodeType::GUMBO_NODE_COMMENT:
-		case GumboNodeType::GUMBO_NODE_WHITESPACE:
-		case GumboNodeType::GUMBO_NODE_TEMPLATE:
 		default:
 			return { node.v.text.text };
 		}
@@ -138,13 +163,39 @@ namespace daw::gumbo {
 		case GumboNodeType::GUMBO_NODE_DOCUMENT: {
 			return 0U;
 		}
-		case GumboNodeType::GUMBO_NODE_TEXT:
-		case GumboNodeType::GUMBO_NODE_CDATA:
-		case GumboNodeType::GUMBO_NODE_COMMENT:
-		case GumboNodeType::GUMBO_NODE_WHITESPACE:
-		case GumboNodeType::GUMBO_NODE_TEMPLATE:
 		default:
 			return node.v.text.start_pos.offset;
+		}
+	}
+
+	constexpr unsigned node_end_offset( GumboNode const &node ) {
+		switch( node.type ) {
+		case GumboNodeType::GUMBO_NODE_ELEMENT: {
+			return node.v.element.end_pos.offset;
+		}
+		case GumboNodeType::GUMBO_NODE_DOCUMENT: {
+			return 0U;
+		}
+		default:
+			return std::char_traits<char>::length( node.v.text.text );
+		}
+	}
+
+	constexpr daw::string_view node_outter_text( GumboNode const &node,
+	                                             daw::string_view html_doc ) {
+		switch( node.type ) {
+		case GumboNodeType::GUMBO_NODE_ELEMENT: {
+			char const *start = node.v.element.original_tag.data;
+			auto len = static_cast<std::size_t>(
+			  node.v.element.original_end_tag.data +
+			  node.v.element.original_end_tag.length - start );
+			return daw::string_view( start, len );
+		}
+		case GumboNodeType::GUMBO_NODE_DOCUMENT: {
+			return html_doc;
+		}
+		default:
+			return { node.v.text.text };
 		}
 	}
 
@@ -152,18 +203,23 @@ namespace daw::gumbo {
 	                                            daw::string_view html_doc ) {
 		switch( node.type ) {
 		case GumboNodeType::GUMBO_NODE_ELEMENT: {
-			auto const start_pos = [&] {
-				if( get_children_count( node ) > 0 ) {
-					// Use start offset of first child
-					return node_start_offset( *get_child_node_at( node, 0U ) );
-				}
-				return node.v.element.start_pos.offset;
-			}( );
-			auto const length = node.v.element.end_pos.offset - start_pos;
-			return html_doc.substr( start_pos, length );
+			char const *start =
+			  node.v.element.original_tag.data + node.v.element.original_tag.length;
+			auto len = static_cast<std::size_t>(
+			  node.v.element.original_end_tag.data - start );
+			return daw::string_view( start, len );
 		}
 		case GumboNodeType::GUMBO_NODE_DOCUMENT: {
-			return html_doc;
+			auto const child_count = get_children_count( node );
+			if( child_count == 0 ) {
+				return { };
+			}
+			GumboNode const &first_child = *get_child_node_at( node, 0 );
+			GumboNode const &last_child = *get_child_node_at( node, child_count - 1 );
+			auto start_pos = node_start_offset( first_child );
+			auto end_pos = node_end_offset( last_child );
+			return daw::string_view( html_doc.data( ) + start_pos,
+			                         end_pos - start_pos );
 		}
 		case GumboNodeType::GUMBO_NODE_TEXT:
 		case GumboNodeType::GUMBO_NODE_CDATA:

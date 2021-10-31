@@ -21,7 +21,7 @@ int main( ) {
 	<head>
 		<title>Test</title>
 	</head>
-	<body><div>Hey folks!</div></body>
+	<body><div class='hello'>Hey folks!</div></body>
 </html>)html";
 	daw::gumbo::GumboHandle output =
 	  gumbo_parse_with_options( &kGumboDefaultOptions,
@@ -31,10 +31,19 @@ int main( ) {
 	daw::gumbo::find_all_oneach(
 	  output->root,
 	  { },
-	  GUMBO_TAG_BODY,
+	  GUMBO_TAG_DIV,
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_text( node ) << '\n';
-		  std::cout << "node raw text: "
+		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
 	  } );
+
+	auto pos = daw::gumbo::find_node_by_attribute_value( output->root,
+	                                                     { },
+	                                                     "class",
+	                                                     "hello" );
+	if( pos ) {
+		std::cout << "Class hello outer text: "
+		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
+	}
 }

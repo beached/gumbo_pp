@@ -37,20 +37,23 @@ namespace daw::gumbo {
 		constexpr gumbo_node_iterator_t( GumboNode *node ) noexcept
 		  : m_node( node ) {}
 
-		[[nodiscard]] constexpr reference operator*( ) const {
+		[[nodiscard]] constexpr reference operator*( ) const noexcept {
 			return *m_node;
 		}
 
-		[[nodiscard]] constexpr pointer get( ) const {
+		[[nodiscard]] constexpr pointer get( ) const noexcept {
 			return m_node;
+		}
+
+		[[nodiscard]] constexpr explicit operator bool( ) const noexcept {
+			return static_cast<bool>( m_node );
 		}
 
 		[[nodiscard]] constexpr pointer operator->( ) const {
 			return m_node;
 		}
 
-	public:
-		constexpr gumbo_node_iterator_t &operator++( ) & {
+		constexpr gumbo_node_iterator_t &operator++( ) &noexcept {
 			// iterate to lowest indexed child, then next children if any.  If no more
 			// children move to parent's, next child.
 			if( not m_node ) {
@@ -89,7 +92,7 @@ namespace daw::gumbo {
 			}
 		}
 
-		[[nodiscard]] constexpr gumbo_node_iterator_t operator++( int ) & {
+		[[nodiscard]] constexpr gumbo_node_iterator_t operator++( int ) &noexcept {
 			gumbo_node_iterator_t result = *this;
 			operator++( );
 			return result;
@@ -97,13 +100,13 @@ namespace daw::gumbo {
 
 		[[nodiscard]] friend constexpr bool
 		operator==( gumbo_node_iterator_t const &lhs,
-		            gumbo_node_iterator_t const &rhs ) {
+		            gumbo_node_iterator_t const &rhs ) noexcept {
 			return lhs.m_node == rhs.m_node;
 		}
 
 		[[nodiscard]] friend constexpr bool
 		operator!=( gumbo_node_iterator_t const &lhs,
-		            gumbo_node_iterator_t const &rhs ) {
+		            gumbo_node_iterator_t const &rhs ) noexcept {
 			return lhs.m_node != rhs.m_node;
 		}
 	};
