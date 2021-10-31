@@ -106,10 +106,10 @@ namespace daw::gumbo::details {
 			return result;
 		}
 
-		[[nodiscard]] inline difference_type
+		[[nodiscard]] constexpr difference_type
 		operator-( GumboVectorIterator const &rhs ) const noexcept {
-			return reinterpret_cast<difference_type>( m_index ) -
-			       reinterpret_cast<difference_type>( rhs.m_index );
+			return static_cast<difference_type>( m_index ) -
+			       static_cast<difference_type>( rhs.m_index );
 		}
 
 		[[nodiscard]] inline daw::not_null<ChildType>
