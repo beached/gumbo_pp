@@ -107,29 +107,6 @@ namespace daw::gumbo {
 		}
 	}
 
-	template<typename Visitor>
-	constexpr decltype( auto ) visit( GumboNode &node, Visitor vis ) {
-		switch( node.type ) {
-		case GumboNodeType::GUMBO_NODE_DOCUMENT:
-			return vis( node.v.document );
-		case GumboNodeType::GUMBO_NODE_ELEMENT:
-			return vis( node.v.element );
-		default:
-			return vis( node.v.text );
-		}
-	}
-
-	template<typename Visitor>
-	constexpr decltype( auto ) visit( GumboNode const &node, Visitor vis ) {
-		switch( node.type ) {
-		case GumboNodeType::GUMBO_NODE_DOCUMENT:
-			return vis( node.v.document );
-		case GumboNodeType::GUMBO_NODE_ELEMENT:
-			return vis( node.v.element );
-		default:
-			return vis( node.v.text );
-		}
-	}
 
 	constexpr daw::string_view node_text( GumboNode const &node ) {
 		switch( node.type ) {

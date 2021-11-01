@@ -110,20 +110,36 @@ namespace daw::gumbo {
 		return first;
 	}
 
+	struct find_attrubte_result_t {
+		bool found;
+		std::size_t index;
+	};
+
+	template<typename Predicate>
+	constexpr find_attrubte_result_t find_attribute_if( gumbo_node_iterator_t it,
+	                                                    Predicate pred ) {
+		if( it->type == GumboNodeType::GUMBO_NODE_ELEMENT ) {
+			auto const attr_count = get_attribute_count( *it );
+			for( unsigned n = 0; n < attr_count; ++n ) {
+				auto *attr = get_attribute_node_at( *it, n );
+				if( pred( *attr ) ) {
+					return { true, n };
+				}
+			}
+			return { false, attr_count };
+		}
+		return { false, 0 };
+	}
+
 	template<typename Predicate>
 	attribute_search_result_t
 	find_node_by_attribute_if( gumbo_node_iterator_t first,
 	                           gumbo_node_iterator_t last,
 	                           Predicate pred ) {
 		while( first != last ) {
-			if( first->type == GumboNodeType::GUMBO_NODE_ELEMENT ) {
-				auto const attr_count = get_attribute_count( *first );
-				for( unsigned n = 0; n < attr_count; ++n ) {
-					auto *attr = get_attribute_node_at( *first, n );
-					if( pred( *attr ) ) {
-						return { first, n };
-					}
-				}
+			auto [found, idx] = find_attribute_if( first, pred );
+			if( found ) {
+				return { first, idx };
 			}
 			++first;
 		}
