@@ -95,6 +95,19 @@ namespace daw::gumbo {
 		return { first, 0 };
 	}
 
+	template<typename... Predicates>
+	static gumbo_node_iterator_t find_if( gumbo_node_iterator_t first,
+	                                      gumbo_node_iterator_t last,
+	                                      Predicates... preds ) {
+		while( first != last ) {
+			if( ( preds( *first ) and ... ) ) {
+				return first;
+			}
+			++first;
+		}
+		return last;
+	}
+
 	template<typename Compare = std::equal_to<>>
 	gumbo_node_iterator_t
 	find_node_by_attribute_value( gumbo_node_iterator_t first,

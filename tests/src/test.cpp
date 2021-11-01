@@ -21,12 +21,12 @@ int main( ) {
 	</head>
 	<body><div class='hello'>Hey folks!</div></body>
 </html>)html";
+	using daw::gumbo::match;
 	daw::gumbo::GumboHandle output =
 	  gumbo_parse_with_options( &kGumboDefaultOptions,
 	                            html.data( ),
 	                            html.size( ) );
 
-	using namespace daw::gumbo::selectors;
 	std::cout << "******\n";
 	daw::gumbo::find_all_if_each(
 	  output->root,
@@ -36,7 +36,7 @@ int main( ) {
 		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
 	  },
-	  match_tag_types<GUMBO_TAG_DIV> );
+	  match::tag::types<GUMBO_TAG_DIV> );
 
 	std::cout << "******\n";
 	std::cout << "All div.hello 's\n";
@@ -47,14 +47,15 @@ int main( ) {
 		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
 		            << '\n';
 	  },
-	  match_tag_types<GUMBO_TAG_DIV>,
-	  match_class_equals{ "hello" } );
+	  match::tag::types<GUMBO_TAG_DIV>,
+	  match::class_type::is( "hello" ) );
 
 	std::cout << "******\n";
-	auto pos = daw::gumbo::find_node_by_attribute_value( output->root,
-	                                                     { },
-	                                                     "class",
-	                                                     "hello" );
+	auto pos =
+	  daw::gumbo::find_if( output->root,
+	                       { },
+	                       match::attribute::value::is( "class", "hello" ) );
+
 	if( pos ) {
 		std::cout << "Class hello outer text: "
 		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';

@@ -17,296 +17,256 @@
 #include <daw/daw_string_view.h>
 
 namespace daw::gumbo {
-	/// No op function object that is true for any Node
-	struct match_all {
-		template<typename Node>
-		inline constexpr bool operator( )( Node const & ) const noexcept {
-			return true;
+	struct match_attribute {
+		/// Match any node that has an attribute where the predicate returns true
+		template<typename Predicate>
+		static constexpr auto where( Predicate p ) noexcept {
+			return [p]( auto const &node ) {
+				return details::find_attribute_if_impl(
+				         gumbo_node_iterator_t( &node ),
+				         [&]( GumboAttribute const &attr ) -> bool {
+					         return p( daw::string_view( attr.name ),
+					                   daw::string_view( attr.value ) );
+				         } )
+				  .found;
+			};
+		}
+
+		struct name {
+			// Match any node that has a matching attribute name
+			static constexpr auto is( daw::string_view attribute_name ) noexcept {
+				return where(
+				  [attribute_name]( daw::string_view name, daw::string_view ) noexcept {
+					  return name == attribute_name;
+				  } );
+			}
+		};
+
+		struct value {
+			/// Match any node with named attribute who's value is either value or
+			/// prefixed by value and a hyphen `-`
+			static constexpr auto
+			contains_prefix( daw::string_view attribute_name,
+			                 daw::string_view value_prefix ) noexcept {
+				return where(
+				  [attribute_name, value_prefix]( daw::string_view name,
+				                                  daw::string_view value ) noexcept {
+					  if( name != attribute_name ) {
+						  return false;
+					  }
+					  if( not value.starts_with( value_prefix ) ) {
+						  return false;
+					  }
+					  if( value_prefix.size( ) == value.size( ) ) {
+						  return true;
+					  }
+					  return value.substr( value_prefix.size( ) ).starts_with( '-' );
+				  } );
+			}
+
+			/// Match any node with named attribute who's value contains the specified
+			/// value
+			static constexpr auto contains( daw::string_view attribute_name,
+			                                daw::string_view value_substr ) noexcept {
+				return where(
+				  [attribute_name, value_substr]( daw::string_view name,
+				                                  daw::string_view value ) noexcept {
+					  return name == attribute_name and
+					         value.find( value_substr ) != daw::string_view::npos;
+				  } );
+			}
+
+			/// Match any node with named attribute who's value starts with the
+			/// specified value
+			static constexpr auto
+			starts_with( daw::string_view attribute_name,
+			             daw::string_view value_prefix ) noexcept {
+				return where(
+				  [attribute_name, value_prefix]( daw::string_view name,
+				                                  daw::string_view value ) noexcept {
+					  return name == attribute_name and value.starts_with( value_prefix );
+				  } );
+			}
+
+			/// Match any node with named attribute who's value end with the
+			/// specified value
+			static constexpr auto
+			ends_with( daw::string_view attribute_name,
+			           daw::string_view value_prefix ) noexcept {
+				return where(
+				  [attribute_name, value_prefix]( daw::string_view name,
+				                                  daw::string_view value ) noexcept {
+					  return name == attribute_name and value.ends_with( value_prefix );
+				  } );
+			}
+
+			/// Match any node with named attribute who's value equals with the
+			/// specified value
+			static constexpr auto is( daw::string_view attribute_name,
+			                          daw::string_view value_prefix ) noexcept {
+				return where(
+				  [attribute_name, value_prefix]( daw::string_view name,
+				                                  daw::string_view value ) noexcept {
+					  return name == attribute_name and value == value_prefix;
+				  } );
+			}
+		};
+	};
+
+	struct match_class {
+		/// Match any node with a class that returns true for the predicate
+		template<typename Predicate>
+		static constexpr auto where( Predicate p ) noexcept {
+			return match_attribute::where(
+			  [p]( daw::string_view attribute_name,
+			       daw::string_view attribute_value ) noexcept -> bool {
+				  return attribute_name == "class" and p( attribute_value );
+			  } );
+		}
+
+		/// Match any node with a class that returns true for the predicate
+		static constexpr auto is( daw::string_view class_name ) noexcept {
+			return match_attribute::where(
+			  [class_name]( daw::string_view attribute_name,
+			                daw::string_view attribute_value ) noexcept -> bool {
+				  return attribute_name == "class" and class_name == attribute_value;
+			  } );
 		}
 	};
 
-	/// Match any node that has an attribute where the predicate returns true
-	template<typename Predicate>
-	struct match_attr_if : private Predicate {
-		inline constexpr match_attr_if( Predicate p )
-		  : Predicate( DAW_MOVE( p ) ) {}
+	struct match_id {
+		/// Match any node with a id that returns true for the predicate
+		template<typename Predicate>
+		static constexpr auto where( Predicate p ) noexcept {
+			return match_attribute::where(
+			  [p]( daw::string_view attribute_name,
+			       daw::string_view attribute_value ) noexcept -> bool {
+				  return attribute_name == "id" and p( attribute_value );
+			  } );
+		}
 
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const {
-			return details::find_attribute_if_impl(
-			         gumbo_node_iterator_t( &node ),
-			         [&]( GumboAttribute const &attr ) {
-				         return Predicate::operator( )(
-				           daw::string_view( attr.name ),
-				           daw::string_view( attr.value ) );
-			         } )
-			  .found;
+		/// Match any node with a id that returns true for the predicate
+		static constexpr auto is( daw::string_view id_name ) noexcept {
+			return match_attribute::where(
+			  [id_name]( daw::string_view attribute_name,
+			             daw::string_view attribute_value ) noexcept {
+				  return attribute_name == "id" and id_name == attribute_value;
+			  } );
 		}
 	};
 
-	// Match any node that has a matching attribute name
-	struct match_attr_name {
-		daw::string_view name;
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return details::find_attribute_if_impl(
-			         gumbo_node_iterator_t( node ),
-			         [&]( GumboAttribute const &attr ) {
-				         return daw::string_view( attr.name ) == name;
-			         } )
-			  .found;
+	struct match_inner_text {
+		/// Match any node with a id that returns true for the predicate
+		template<typename Predicate>
+		static constexpr auto where( daw::string_view html_doc,
+		                             Predicate p ) noexcept {
+			return [html_doc, p]( auto const &node ) -> bool {
+				return p( node_inner_text( node, html_doc ) );
+			};
+		}
+
+		static constexpr auto contains( daw::string_view html_doc,
+		                                daw::string_view search_text ) noexcept {
+			return where( html_doc, [search_text]( daw::string_view text ) noexcept {
+				return text.find( search_text ) != daw::string_view::npos;
+			} );
+		}
+
+		/// Match any node with inner text who's value starts with the specified
+		/// value
+		static constexpr auto starts_with( daw::string_view html_doc,
+		                                   daw::string_view prefix_text ) noexcept {
+			return where( html_doc, [prefix_text]( daw::string_view text ) noexcept {
+				return text.starts_with( prefix_text );
+			} );
+		}
+
+		/// Match any node with inner text who's value ends with the specified
+		/// value
+		static constexpr auto ends_with( daw::string_view html_doc,
+		                                 daw::string_view suffix_text ) noexcept {
+			return where( html_doc, [suffix_text]( daw::string_view text ) noexcept {
+				return text.ends_with( suffix_text );
+			} );
+		}
+
+		/// Match any node with inner text who's value is equal to the specified
+		/// value
+		static constexpr auto is( daw::string_view html_doc,
+		                          daw::string_view match_text ) noexcept {
+			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
+				return text == match_text;
+			} );
 		}
 	};
 
-	/// Match any node with named attribute who's value is either value or
-	/// prefixed by value and a hyphen `-`
-	struct match_attr_contains_prefix {
-		daw::string_view name;
-		daw::string_view value;
+	struct match_outer_text {
+		/// Match any node with a id that returns true for the predicate
+		template<typename Predicate>
+		static constexpr auto where( daw::string_view html_doc,
+		                             Predicate p ) noexcept {
+			return [html_doc, p]( auto const &node ) -> bool {
+				return p( node_outer_text( node, html_doc ) );
+			};
+		}
 
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  if( name != attr_name ) {
-					  return false;
-				  }
-				  if( not attr_value.starts_with( value ) ) {
-					  return value;
-				  }
-				  if( attr_value.size( ) == value.size( ) ) {
-					  return true;
-				  }
-				  return attr_value.substr( value.size( ) ).starts_with( '-' );
-			  } }( node );
+		static constexpr auto contains( daw::string_view html_doc,
+		                                daw::string_view search_text ) noexcept {
+			return where( html_doc, [search_text]( daw::string_view text ) noexcept {
+				return text.find( search_text ) != daw::string_view::npos;
+			} );
+		}
+
+		/// Match any node with outer text who's value starts with the specified
+		/// value
+		static constexpr auto starts_with( daw::string_view html_doc,
+		                                   daw::string_view prefix_text ) noexcept {
+			return where( html_doc, [prefix_text]( daw::string_view text ) noexcept {
+				return text.starts_with( prefix_text );
+			} );
+		}
+
+		/// Match any node with outer text who's value ends with the specified
+		/// value
+		static constexpr auto ends_with( daw::string_view html_doc,
+		                                 daw::string_view suffix_text ) noexcept {
+			return where( html_doc, [suffix_text]( daw::string_view text ) noexcept {
+				return text.ends_with( suffix_text );
+			} );
+		}
+
+		/// Match any node with outer text who's value is equal to the specified
+		/// value
+		static constexpr auto is( daw::string_view html_doc,
+		                          daw::string_view match_text ) noexcept {
+			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
+				return text == match_text;
+			} );
 		}
 	};
 
-	/// Match any node with named attribute who's value contains the specified
-	/// value
-	struct match_attr_contains {
-		daw::string_view name;
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == name and
-				         attr_value.find( value ) != daw::string_view::npos;
-			  } }( node );
+	struct match_tag {
+		/// Match any node with where the tag type where the Predicate returns true
+		template<typename Predicate>
+		static constexpr auto where( Predicate p ) noexcept {
+			return [p]( auto const &node ) noexcept -> bool {
+				return node.type == GUMBO_NODE_ELEMENT and p( node.v.element.tag );
+			};
 		}
+
+		/// Match any node with where the tag type where the tag type matches on of
+		/// the specified types
+		template<GumboTag... tags>
+		static constexpr auto types = where( []( GumboTag tag_value ) {
+			static_assert( sizeof...( tags ) > 0, "Must supply at least one tag" );
+			return ( ( tag_value == tags ) | ... );
+		} );
 	};
 
-	/// Match any node with named attribute who's value starts with the
-	/// specified value
-	struct match_attr_starts_with {
-		daw::string_view name;
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == name and attr_value.starts_with( value );
-			  } }( node );
-		}
+	struct match {
+		using attribute = match_attribute;
+		using class_type = match_class;
+		using id = match_id;
+		using tag = match_tag;
 	};
-
-	/// Match any node with named attribute who's value ends with the specified
-	/// value
-	struct match_attr_ends_with {
-		daw::string_view name;
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == name and attr_value.ends_with( value );
-			  } }( node );
-		}
-	};
-
-	/// Match any node with named attribute who's value equals with the specified
-	/// value
-	struct match_attr_equals {
-		daw::string_view name;
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == name and attr_value == value;
-			  } }( node );
-		}
-	};
-
-	/// Match any node with a class that returns true for the predicate
-	template<typename Predicate>
-	struct match_class_if : private Predicate {
-		inline constexpr match_class_if( Predicate p )
-		  : Predicate( DAW_MOVE( p ) ) {}
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == "class" and Predicate::operator( )( attr_value );
-			  } }( node );
-		}
-	};
-
-	/// Match any node with a class name equal to name
-	struct match_class_equals {
-		daw::string_view name;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_class_if{ [&]( daw::string_view class_name ) {
-				return class_name == name;
-			} }( node );
-		}
-	};
-
-	/// Match any node with an id that returns true for the predicate
-	template<typename Predicate>
-	struct match_id_if : private Predicate {
-		inline constexpr match_id_if( Predicate p )
-		  : Predicate( DAW_MOVE( p ) ) {}
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_attr_if{
-			  [&]( daw::string_view attr_name, daw::string_view attr_value ) {
-				  return attr_name == "id" and Predicate::operator( )( attr_value );
-			  } }( node );
-		}
-	};
-
-	/// Match any node with an id equal to name
-	struct match_id_equals {
-		daw::string_view name;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_class_if{
-			  [&]( daw::string_view id_name ) { return id_name == name; } }( node );
-		}
-	};
-
-	/// Match any node that has inner text where the predicate returns true
-	template<typename Predicate>
-	struct match_inner_text_if : private Predicate {
-		inline constexpr match_inner_text_if( Predicate p )
-		  : Predicate( DAW_MOVE( p ) ) {}
-
-		daw::string_view html_doc;
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const {
-			return Predicate::operator( )( node_inner_text( node, html_doc ) );
-		}
-	};
-
-	/// Match any node with inner text who's value contains the specified value
-	struct match_inner_text_contains {
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_inner_text_if{ [&]( daw::string_view inner_text ) {
-				return inner_text.find( value ) != daw::string_view::npos;
-			} }( node );
-		}
-	};
-
-	/// Match any node with inner text who's value starts with the specified value
-	struct match_inner_text_starts_with {
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_inner_text_if{ [&]( daw::string_view inner_text_value ) {
-				return inner_text_value.starts_with( value );
-			} }( node );
-		}
-	};
-
-	/// Match any node with inner text who's value ends with the specified value
-	struct match_inner_text_ends_with {
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_inner_text_if{ [&]( daw::string_view inner_text_value ) {
-				return inner_text_value.ends_with( value );
-			} }( node );
-		}
-	};
-
-	/// Match any node with inner text who's value equals with the specified value
-	struct match_inner_text_equals {
-		daw::string_view value;
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_inner_text_if{ [&]( daw::string_view inner_text_value ) {
-				return inner_text_value == value;
-			} }( node );
-		}
-	};
-
-	/// Match any node with where the tag type where the Predicate returns true
-	template<typename Predicate>
-	struct match_tag_if : private Predicate {
-		inline constexpr match_tag_if( Predicate p )
-		  : Predicate( DAW_MOVE( p ) ) {}
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const {
-			return node.type == GUMBO_NODE_ELEMENT and
-			       Predicate::operator( )( node.v.element.tag );
-		}
-	};
-
-	/// Match any node with where the tag type where the tag type matches on of
-	/// the specified types
-	template<GumboTag... tags>
-	struct match_tag_types_t {
-		static_assert( sizeof...( tags ) > 0, "Must specify at least one tag" );
-
-		template<typename Node>
-		constexpr bool operator( )( Node const &node ) const noexcept {
-			return match_tag_if{ [&]( GumboTag tag_value ) {
-				return ( ( tag_value == tags ) | ... );
-			} }( node );
-		}
-	};
-
-	template<GumboTag... tags>
-	inline constexpr match_tag_types_t<tags...> match_tag_types = { };
-
-	namespace selectors {
-		using ::daw::gumbo::match_all;
-		using ::daw::gumbo::match_attr_contains;
-		using ::daw::gumbo::match_attr_contains_prefix;
-		using ::daw::gumbo::match_attr_ends_with;
-		using ::daw::gumbo::match_attr_equals;
-		using ::daw::gumbo::match_attr_if;
-		using ::daw::gumbo::match_attr_name;
-		using ::daw::gumbo::match_attr_starts_with;
-		using ::daw::gumbo::match_class_equals;
-		using ::daw::gumbo::match_class_if;
-		using ::daw::gumbo::match_id_equals;
-		using ::daw::gumbo::match_id_if;
-		using ::daw::gumbo::match_inner_text_contains;
-		using ::daw::gumbo::match_inner_text_ends_with;
-		using ::daw::gumbo::match_inner_text_equals;
-		using ::daw::gumbo::match_inner_text_if;
-		using ::daw::gumbo::match_inner_text_starts_with;
-		using ::daw::gumbo::match_tag_if;
-		using ::daw::gumbo::match_tag_types_t;
-		using ::daw::gumbo::match_tag_types;
-	} // namespace selectors
 } // namespace daw::gumbo
