@@ -26,16 +26,30 @@ int main( ) {
 	                            html.data( ),
 	                            html.size( ) );
 
-	daw::gumbo::find_all_oneach(
+	std::cout << "******\n";
+	daw::gumbo::find_all_if_each(
 	  output->root,
 	  { },
-	  GUMBO_TAG_DIV,
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_text( node ) << '\n';
 		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
-	  } );
+	  },
+	  daw::gumbo::match_tag_types<GUMBO_TAG_DIV> );
 
+	std::cout << "******\n";
+	std::cout << "All div.hello 's\n";
+	daw::gumbo::find_all_if_each(
+	  output->root,
+	  { },
+	  [&]( GumboNode const &node ) {
+		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
+		            << '\n';
+	  },
+	  daw::gumbo::match_tag_types<GUMBO_TAG_DIV>,
+	  daw::gumbo::match_class_equals{ "hello" } );
+
+	std::cout << "******\n";
 	auto pos = daw::gumbo::find_node_by_attribute_value( output->root,
 	                                                     { },
 	                                                     "class",
@@ -44,15 +58,4 @@ int main( ) {
 		std::cout << "Class hello outer text: "
 		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
 	}
-
-	daw::gumbo::selector sel( output->root, { } );
-	auto a =
-	  sel.select( daw::gumbo::select_tag<daw::gumbo::select_type::all> ).size( );
-	assert( sel.select( daw::gumbo::select_tag<daw::gumbo::select_type::all> )
-	          .size( ) == 11 );
-	assert( sel
-	          .select( daw::gumbo::select_tag<daw::gumbo::select_type::contains>,
-	                   "class",
-	                   "hel" )
-	          .size( ) == 1 );
 }

@@ -8,19 +8,23 @@
 
 #pragma once
 
+#include "details/find_attrib_if_impl.h"
 #include "details/gumbo_pp.h"
 #include "gumbo_node_iterator.h"
 
 #include <daw/daw_move.h>
+#include <daw/daw_string_view.h>
 
 namespace daw::gumbo {
-	template<typename OutputIterator, typename Predicate>
+	/// When a node satisfies the predicates, copy the reference value to the
+	/// Output range
+	template<typename OutputIterator, typename... Predicates>
 	static OutputIterator find_all_if( gumbo_node_iterator_t first,
 	                                   gumbo_node_iterator_t last,
 	                                   OutputIterator out_it,
-	                                   Predicate pred ) {
+	                                   Predicates... preds ) {
 		while( first != last ) {
-			if( first.get( ) and pred( *first ) ) {
+			if( first.get( ) and ( preds( *first ) and ... ) ) {
 				*out_it = *first;
 				++out_it;
 			}
@@ -28,13 +32,15 @@ namespace daw::gumbo {
 		}
 	}
 
-	template<typename Predicate, typename OnEach>
+	/// When a node satisfies the predicates, pass the reference value to the
+	/// OnEach callback
+	template<typename OnEach, typename... Predicates>
 	static void find_all_if_each( gumbo_node_iterator_t first,
 	                              gumbo_node_iterator_t last,
-	                              Predicate pred,
-	                              OnEach onEach ) {
+	                              OnEach onEach,
+	                              Predicates... preds ) {
 		while( first != last ) {
-			if( first.get( ) and pred( *first ) ) {
+			if( first and ( preds( *first ) and ... ) ) {
 				onEach( *first );
 			}
 			++first;
@@ -56,13 +62,13 @@ namespace daw::gumbo {
 	                             gumbo_node_iterator_t last,
 	                             GumboTag tag,
 	                             OnEach onEach ) {
-		find_all_if_each(
-		  first,
-		  last,
-		  [tag]( GumboNode const &node ) {
-			  return node.type == GUMBO_NODE_ELEMENT and node.v.element.tag == tag;
-		  },
-		  DAW_MOVE( onEach ) );
+		find_all_if_each( first,
+		                  last,
+		                  DAW_MOVE( onEach ),
+		                  [tag]( GumboNode const &node ) {
+			                  return node.type == GUMBO_NODE_ELEMENT and
+			                         node.v.element.tag == tag;
+		                  } );
 	}
 
 	struct attribute_search_result_t {
@@ -110,25 +116,10 @@ namespace daw::gumbo {
 		return first;
 	}
 
-	struct find_attrubte_result_t {
-		bool found;
-		std::size_t index;
-	};
-
 	template<typename Predicate>
-	constexpr find_attrubte_result_t find_attribute_if( gumbo_node_iterator_t it,
-	                                                    Predicate pred ) {
-		if( it->type == GumboNodeType::GUMBO_NODE_ELEMENT ) {
-			auto const attr_count = get_attribute_count( *it );
-			for( unsigned n = 0; n < attr_count; ++n ) {
-				auto *attr = get_attribute_node_at( *it, n );
-				if( pred( *attr ) ) {
-					return { true, n };
-				}
-			}
-			return { false, attr_count };
-		}
-		return { false, 0 };
+	constexpr find_attribute_result_t find_attribute_if( gumbo_node_iterator_t it,
+	                                                     Predicate pred ) {
+		return details::find_attribute_if_impl( DAW_MOVE( it ), DAW_MOVE( pred ) );
 	}
 
 	template<typename Predicate>

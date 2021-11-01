@@ -21,12 +21,12 @@ namespace daw::gumbo {
 	struct gumbo_node_iterator_t {
 		using difference_type = std::ptrdiff_t;
 		using size_type = unsigned int;
-		using value_type = GumboNode;
-		using pointer = value_type *;
-		using const_pointer = value_type const *;
+		using value_type = std::remove_cv_t<GumboNode>;
+		using pointer = GumboNode const *;
+		using const_pointer = GumboNode const *;
 		using iterator_category = std::input_iterator_tag;
-		using reference = value_type &;
-		using const_reference = value_type const &;
+		using reference = GumboNode const &;
+		using const_reference = GumboNode const &;
 
 	private:
 		pointer m_node = nullptr;
@@ -34,8 +34,19 @@ namespace daw::gumbo {
 	public:
 		constexpr gumbo_node_iterator_t( ) noexcept = default;
 
-		constexpr gumbo_node_iterator_t( GumboNode *node ) noexcept
+		constexpr gumbo_node_iterator_t( GumboNode const *node ) noexcept
 		  : m_node( node ) {}
+
+		constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
+		  : m_node( &node ) {}
+
+		constexpr gumbo_node_iterator_t begin( ) const {
+			return *this;
+		}
+
+		constexpr gumbo_node_iterator_t end( ) const {
+			return { };
+		}
 
 		[[nodiscard]] constexpr reference operator*( ) const noexcept {
 			return *m_node;
