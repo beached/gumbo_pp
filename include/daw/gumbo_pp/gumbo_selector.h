@@ -287,4 +287,26 @@ namespace daw::gumbo {
 	template<GumboTag... tags>
 	inline constexpr match_tag_types_t<tags...> match_tag_types = { };
 
+	namespace selectors {
+		using ::daw::gumbo::match_all;
+		using ::daw::gumbo::match_attr_contains;
+		using ::daw::gumbo::match_attr_contains_prefix;
+		using ::daw::gumbo::match_attr_ends_with;
+		using ::daw::gumbo::match_attr_equals;
+		using ::daw::gumbo::match_attr_if;
+		using ::daw::gumbo::match_attr_name;
+		using ::daw::gumbo::match_attr_starts_with;
+		using ::daw::gumbo::match_class_equals;
+		using ::daw::gumbo::match_class_if;
+		using ::daw::gumbo::match_id_equals;
+		using ::daw::gumbo::match_id_if;
+		using ::daw::gumbo::match_inner_text_contains;
+		using ::daw::gumbo::match_inner_text_ends_with;
+		using ::daw::gumbo::match_inner_text_equals;
+		using ::daw::gumbo::match_inner_text_if;
+		using ::daw::gumbo::match_inner_text_starts_with;
+		using ::daw::gumbo::match_tag_if;
+		using ::daw::gumbo::match_tag_types_t;
+		using ::daw::gumbo::match_tag_types;
+	} // namespace selectors
 } // namespace daw::gumbo

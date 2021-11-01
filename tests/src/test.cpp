@@ -26,6 +26,7 @@ int main( ) {
 	                            html.data( ),
 	                            html.size( ) );
 
+	using namespace daw::gumbo::selectors;
 	std::cout << "******\n";
 	daw::gumbo::find_all_if_each(
 	  output->root,
@@ -35,7 +36,7 @@ int main( ) {
 		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
 	  },
-	  daw::gumbo::match_tag_types<GUMBO_TAG_DIV> );
+	  match_tag_types<GUMBO_TAG_DIV> );
 
 	std::cout << "******\n";
 	std::cout << "All div.hello 's\n";
@@ -46,8 +47,8 @@ int main( ) {
 		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
 		            << '\n';
 	  },
-	  daw::gumbo::match_tag_types<GUMBO_TAG_DIV>,
-	  daw::gumbo::match_class_equals{ "hello" } );
+	  match_tag_types<GUMBO_TAG_DIV>,
+	  match_class_equals{ "hello" } );
 
 	std::cout << "******\n";
 	auto pos = daw::gumbo::find_node_by_attribute_value( output->root,
