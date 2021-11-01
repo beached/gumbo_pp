@@ -28,7 +28,7 @@ int main( ) {
 	                            html.size( ) );
 
 	std::cout << "******\n";
-	daw::gumbo::find_all_if_each(
+	daw::gumbo::find_all_if_oneach(
 	  output->root,
 	  { },
 	  [&]( GumboNode const &node ) {
@@ -40,7 +40,7 @@ int main( ) {
 
 	std::cout << "******\n";
 	std::cout << "All div.hello 's\n";
-	daw::gumbo::find_all_if_each(
+	daw::gumbo::find_all_if_oneach(
 	  output->root,
 	  { },
 	  [&]( GumboNode const &node ) {
