@@ -97,28 +97,80 @@ namespace daw::gumbo::match_details {
 		};
 
 		/// Match any node that has any of these attributes
-		template<typename... StringView>
-		static constexpr auto exists( StringView &&...names ) noexcept {
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto exists( Container &&c ) noexcept {
 			return [=]( auto const &node ) {
-				return ( attribute_exists( node, names ) or ... );
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view name ) {
+					       return attribute_exists( node, name );
+				       } ) != last;
+			};
+		}
+
+		/// Match any node that has any of these attributes
+		template<typename... StringView>
+		static constexpr auto exists( daw::string_view name,
+		                              StringView &&...names ) noexcept {
+			return [=]( auto const &node ) {
+				return attribute_exists( node, name ) or
+				       ( attribute_exists( node, names ) or ... );
 			};
 		}
 
 		struct name {
 			// Match any node that has a matching attribute name
-			template<typename... StringView>
-			static constexpr auto is( StringView &&...attribute_names ) noexcept {
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
+			static constexpr auto is( Container &&c ) noexcept {
 				return where( [=]( daw::string_view name, daw::string_view ) noexcept {
-					return ( ( name == attribute_names ) or ... );
+					auto first = std::begin( c );
+					auto last = std::end( c );
+					return std::find_if( first, last, [&]( daw::string_view n ) {
+						       return n == name;
+					       } ) != last;
 				} );
+			}
+			// Match any node that has a matching attribute name
+			template<typename... StringView>
+			static constexpr auto is( daw::string_view attribute_name,
+			                          StringView &&...attribute_names ) noexcept {
+				return where( [=]( daw::string_view name, daw::string_view ) noexcept {
+					return ( name == attribute_name ) or
+					       ( ( name == attribute_names ) or ... );
+				} );
+			}
+
+			// Match any node that has a matching attribute name
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
+			static constexpr auto is_not( Container &&c ) noexcept {
+				return match_all{
+				  where( [=]( daw::string_view name, daw::string_view ) noexcept {
+					  auto first = std::begin( c );
+					  auto last = std::end( c );
+					  return std::all_of( first, last, [&]( daw::string_view n ) {
+						         return n == name;
+					         } ) != last;
+				  } ),
+				  has_none };
 			}
 
 			// Match any node that does not have a matching attribute name
 			template<typename... StringView>
-			static constexpr auto is_not( StringView &&...attribute_names ) noexcept {
+			static constexpr auto is_not( daw::string_view attribute_name,
+			                              StringView &&...attribute_names ) noexcept {
 				return match_all{
 				  where( [=]( daw::string_view name, daw::string_view ) noexcept {
-					  return ( ( name != attribute_names ) and ... );
+					  return ( name == attribute_name ) and
+					         ( ( name != attribute_names ) and ... );
 				  } ),
 				  has_none };
 			}
@@ -306,10 +358,33 @@ namespace daw::gumbo::match_details {
 			};
 		}
 
+		template<typename Map, typename Predicate>
+		static constexpr auto map( Map &&map, Predicate &&pred ) noexcept {
+			return [=]( auto const &node ) -> bool {
+				return pred( map( node_content_text( node ) ) );
+			};
+		}
+
+		template<typename Container,
+		         std::enable_if_t<daw::traits::is_container_like_v<
+		                            daw::remove_cvref_t<Container>>,
+		                          std::nullptr_t> = nullptr>
+		static constexpr auto contains( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view cur_text ) {
+					       return cur_text == text;
+				       } ) != last;
+			} );
+		}
+
 		template<typename... StringView>
-		static constexpr auto contains( StringView &&...search_text ) noexcept {
+		static constexpr auto contains( daw::string_view search_text,
+		                                StringView &&...search_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
-				return ( ( text.find( search_text ) != daw::string_view::npos ) or
+				return ( text.find( search_text ) != daw::string_view::npos ) or
+				       ( ( text.find( search_texts ) != daw::string_view::npos ) or
 				         ... );
 			} );
 		}
