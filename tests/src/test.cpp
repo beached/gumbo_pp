@@ -28,9 +28,13 @@ int main( ) {
 	                            html.size( ) );
 
 	std::cout << "******\n";
-	daw::gumbo::for_each_if(
-	  output->root,
-	  { },
+
+	auto const first = daw::gumbo::gumbo_node_iterator_t( output->root );
+	auto const last = daw::gumbo::gumbo_node_iterator_t( );
+
+	daw::algorithm::for_each_if(
+	  first,
+	  last,
 	  match::tag::types<GUMBO_TAG_DIV>,
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_content_text( node )
@@ -41,9 +45,9 @@ int main( ) {
 
 	std::cout << "******\n";
 	std::cout << "All div.hello 's\n";
-	daw::gumbo::for_each_if(
-	  output->root,
-	  { },
+	daw::algorithm::for_each_if(
+	  first,
+	  last,
 	  match::tag::types<GUMBO_TAG_DIV> and match::class_type::is( "hello" ),
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
@@ -51,18 +55,16 @@ int main( ) {
 	  } );
 
 	std::cout << "******\n";
-	auto pos =
-	  daw::gumbo::find_if( output->root,
-	                       { },
-	                       match::attribute::value::is( "class", "hello" ) );
+	auto pos = std::find_if( first,
+	                         last,
+	                         match::attribute::value::is( "class", "hello" ) );
 
 	if( pos ) {
 		std::cout << "Class hello outer text: "
 		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
 	}
 
-	pos =
-	  daw::gumbo::find_if( output->root, { }, match::tag::types<GUMBO_TAG_A> );
+	pos = std::find_if( first, last, match::tag::types<GUMBO_TAG_A> );
 	if( pos ) {
 		std::cout << "Anchor content text: "
 		          << daw::gumbo::node_content_text( *pos ) << '\n';

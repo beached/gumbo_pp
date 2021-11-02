@@ -24,6 +24,8 @@ namespace daw::gumbo {
 		using value_type = std::remove_cv_t<GumboNode>;
 		using pointer = GumboNode const *;
 		using const_pointer = GumboNode const *;
+		// Could be forward, but that allows calling std::distance when calling
+		// insert or using iterator ctor's on Containers
 		using iterator_category = std::input_iterator_tag;
 		using reference = GumboNode const &;
 		using const_reference = GumboNode const &;

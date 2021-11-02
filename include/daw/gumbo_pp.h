@@ -9,7 +9,6 @@
 #pragma once
 
 #include "gumbo_pp/details/gumbo_pp.h"
-#include "gumbo_pp/gumbo_algorithms.h"
 #include "gumbo_pp/gumbo_handle.h"
 #include "gumbo_pp/gumbo_node_iterator.h"
 #include "gumbo_pp/gumbo_selector.h"

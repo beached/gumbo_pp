@@ -10,7 +10,6 @@
 
 #include "details/find_attrib_if_impl.h"
 #include "details/gumbo_pp.h"
-#include "gumbo_algorithms.h"
 #include "gumbo_node_iterator.h"
 
 #include <daw/daw_logic.h>
@@ -67,6 +66,48 @@ namespace daw::gumbo {
 	};
 	template<typename... Matchers>
 	match_any( Matchers... ) -> match_any<Matchers...>;
+
+	template<typename... Matchers>
+	class match_one {
+		std::tuple<Matchers...> m_matchers;
+
+	public:
+		constexpr match_one( Matchers &&...matchers )
+		  : m_matchers{ DAW_MOVE( matchers )... } {}
+
+		constexpr match_one( Matchers const &...matchers )
+		  : m_matchers{ matchers... } {}
+
+		template<typename Node>
+		constexpr bool operator( )( Node const &node ) const {
+			return std::apply(
+			  [&]( auto &&...matchers ) -> bool {
+				  return ( static_cast<bool>( DAW_FWD( matchers )( node ) ) ^ ... );
+			  },
+			  m_matchers );
+		}
+	};
+	template<typename... Matchers>
+	match_one( Matchers... ) -> match_one<Matchers...>;
+
+	template<typename Matcher>
+	class match_not : private Matcher {
+
+	public:
+		constexpr match_not( Matcher &&matcher )
+		  : Matcher{ DAW_MOVE( matcher ) } {}
+
+		constexpr match_not( Matcher const &matcher )
+		  : Matcher{ matcher } {}
+
+		template<typename Node>
+		constexpr bool operator( )( Node const &node ) const {
+			return not Matcher::operator( )( node );
+		}
+	};
+	template<typename Matcher>
+	match_not( Matcher ) -> match_not<Matcher>;
+
 } // namespace daw::gumbo
 namespace daw::gumbo::match_details {
 	struct match_attribute {
@@ -105,6 +146,9 @@ namespace daw::gumbo::match_details {
 			return [=]( auto const &node ) {
 				auto first = std::begin( c );
 				auto last = std::end( c );
+				if( first == last ) {
+					return false;
+				}
 				return std::find_if( first, last, [&]( daw::string_view name ) {
 					       return attribute_exists( node, name );
 				       } ) != last;
@@ -131,6 +175,9 @@ namespace daw::gumbo::match_details {
 				return where( [=]( daw::string_view name, daw::string_view ) noexcept {
 					auto first = std::begin( c );
 					auto last = std::end( c );
+					if( first == last ) {
+						return false;
+					}
 					return std::find_if( first, last, [&]( daw::string_view n ) {
 						       return n == name;
 					       } ) != last;
@@ -156,9 +203,12 @@ namespace daw::gumbo::match_details {
 				  where( [=]( daw::string_view name, daw::string_view ) noexcept {
 					  auto first = std::begin( c );
 					  auto last = std::end( c );
-					  return std::all_of( first, last, [&]( daw::string_view n ) {
-						         return n == name;
-					         } ) != last;
+					  if( first == last ) {
+						  return true;
+					  }
+					  return not std::all_of( first, last, [&]( daw::string_view n ) {
+						  return n == name;
+					  } ) != last;
 				  } ),
 				  has_none };
 			}
@@ -210,6 +260,9 @@ namespace daw::gumbo::match_details {
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  auto first = std::begin( value_substrs );
 					  auto last = std::end( value_substrs );
+					  if( first == last ) {
+						  return false;
+					  }
 					  return name == attribute_name and
 					         std::find_if( first,
 					                       last,
@@ -222,48 +275,129 @@ namespace daw::gumbo::match_details {
 
 			/// Match any node with named attribute who's value contains the
 			/// specified value
+			template<typename... StringView>
 			static constexpr auto contains( daw::string_view attribute_name,
-			                                daw::string_view value_substr ) noexcept {
+			                                daw::string_view value_substr,
+			                                StringView &&...value_substrs ) noexcept {
 				return where(
-				  [attribute_name, value_substr]( daw::string_view name,
-				                                  daw::string_view value ) noexcept {
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  return name == attribute_name and
-					         value.find( value_substr ) != daw::string_view::npos;
+					         ( ( value.find( value_substr ) != daw::string_view::npos ) or
+					           ( ( value.find( value_substrs ) !=
+					               daw::string_view::npos ) or
+					             ... ) );
 				  } );
 			}
 
-			/// Match any node with named attribute who's value starts with the
-			/// specified value
+			/// Match any node with named attribute who's value starts with one of the
+			/// specified values
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
+			static constexpr auto starts_with( daw::string_view attribute_name,
+			                                   Container &&value_prefixes ) noexcept {
+				return where(
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  auto first = std::begin( value_prefixes );
+					  auto last = std::end( value_prefixes );
+					  if( first == last ) {
+						  return false;
+					  }
+					  return name == attribute_name and
+					         std::find_if( first,
+					                       last,
+					                       [&]( daw::string_view value_prefix ) {
+						                       return value.starts_with( value_prefix );
+					                       } ) != last;
+				  } );
+			}
+
+			/// Match any node with named attribute who's value starts with one of the
+			/// specified values
+			template<typename... StringView>
 			static constexpr auto
 			starts_with( daw::string_view attribute_name,
-			             daw::string_view value_prefix ) noexcept {
+			             daw::string_view value_prefix,
+			             StringView &&...value_prefixes ) noexcept {
 				return where(
-				  [attribute_name, value_prefix]( daw::string_view name,
-				                                  daw::string_view value ) noexcept {
-					  return name == attribute_name and value.starts_with( value_prefix );
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  return name == attribute_name and
+					         ( value.starts_with( value_prefix ) or
+					           ( value.starts_with( value_prefixes ) or ... ) );
+				  } );
+			}
+
+			/// Match any node with named attribute who's value ends with one of the
+			/// specified values
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
+			static constexpr auto ends_with( daw::string_view attribute_name,
+			                                 Container &&value_prefixes ) noexcept {
+				return where(
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  auto first = std::begin( value_prefixes );
+					  auto last = std::end( value_prefixes );
+					  if( first == last ) {
+						  return false;
+					  }
+					  return name == attribute_name and
+					         std::find_if( first,
+					                       last,
+					                       [&]( daw::string_view value_prefix ) {
+						                       return value.ends_with( value_prefix );
+					                       } ) != last;
 				  } );
 			}
 
 			/// Match any node with named attribute who's value end with the
 			/// specified value
+			template<typename... StringView>
 			static constexpr auto
 			ends_with( daw::string_view attribute_name,
-			           daw::string_view value_prefix ) noexcept {
+			           daw::string_view value_prefix,
+			           StringView &&...value_prefixes ) noexcept {
 				return where(
-				  [attribute_name, value_prefix]( daw::string_view name,
-				                                  daw::string_view value ) noexcept {
-					  return name == attribute_name and value.ends_with( value_prefix );
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  return name == attribute_name and
+					         ( value.ends_with( value_prefix ) or
+					           ( value.ends_with( value_prefixes ) or ... ) );
 				  } );
 			}
 
-			/// Match any node with named attribute who's value equals with the
-			/// specified value
+			/// Match any node with named attribute who's value equals to one of the
+			/// specified values
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
 			static constexpr auto is( daw::string_view attribute_name,
-			                          daw::string_view value_prefix ) noexcept {
+			                          Container &&attribute_values ) noexcept {
 				return where(
-				  [attribute_name, value_prefix]( daw::string_view name,
-				                                  daw::string_view value ) noexcept {
-					  return name == attribute_name and value == value_prefix;
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  auto first = std::begin( attribute_values );
+					  auto last = std::end( attribute_values );
+					  if( first == last ) {
+						  return false;
+					  }
+					  return name == attribute_name and
+					         std::find( first, last, value ) != last;
+				  } );
+			}
+
+			/// Match any node with named attribute who's value equals to one of the
+			/// specified values
+			template<typename... StringView>
+			static constexpr auto is( daw::string_view attribute_name,
+			                          daw::string_view attribute_value,
+			                          StringView &&...attribute_values ) noexcept {
+				return where(
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  return name == attribute_name and
+					         ( value == attribute_value or
+					           ( ( value == attribute_values ) or ... ) );
 				  } );
 			}
 
@@ -634,6 +768,28 @@ namespace daw::gumbo::match_details {
 		return match_all{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
 	};
 
+	template<
+	  typename MatchL,
+	  typename MatchR,
+	  std::enable_if_t<
+	    std::conjunction_v<
+	      std::
+	        is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
+	      std::
+	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
+	    std::nullptr_t> = nullptr>
+	constexpr auto operator^( MatchL &&lhs, MatchR &&rhs ) noexcept {
+		return match_one{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
+	};
+
+	template<typename Matcher,
+	         std::enable_if_t<std::is_invocable_r_v<bool,
+	                                                daw::remove_cvref_t<Matcher>,
+	                                                GumboNode const &>,
+	                          std::nullptr_t> = nullptr>
+	constexpr auto operator!( Matcher &&matcher ) noexcept {
+		return match_not{ DAW_FWD2( Matcher, matcher ) };
+	};
 } // namespace daw::gumbo::match_details
 
 namespace daw::gumbo {

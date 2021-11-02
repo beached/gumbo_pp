@@ -17,6 +17,7 @@
 #include <iterator>
 
 namespace daw::gumbo::details {
+	// An iterator for GumboVector types, often the data submembers in GumboNode's
 	template<typename ChildType = GumboNode *>
 	struct GumboVectorIterator {
 		using difference_type = std::ptrdiff_t;
