@@ -19,7 +19,7 @@ int main( ) {
 	<head>
 		<title>Test</title>
 	</head>
-	<body><div class='hello'>Hey folks!</div></body>
+	<body><div class='hello'><b>Hey folks!</b></div><a href="http://www.google.com">Google</a></body>
 </html>)html";
 	using daw::gumbo::match;
 	daw::gumbo::GumboHandle output =
@@ -32,7 +32,8 @@ int main( ) {
 	  output->root,
 	  { },
 	  [&]( GumboNode const &node ) {
-		  std::cout << "node text: " << daw::gumbo::node_text( node ) << '\n';
+		  std::cout << "node text: " << daw::gumbo::node_content_text( node )
+		            << '\n';
 		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
 	  },
@@ -59,5 +60,12 @@ int main( ) {
 	if( pos ) {
 		std::cout << "Class hello outer text: "
 		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
+	}
+
+	pos =
+	  daw::gumbo::find_if( output->root, { }, match::tag::types<GUMBO_TAG_A> );
+	if( pos ) {
+		std::cout << "Anchor content text: "
+		          << daw::gumbo::node_content_text( *pos ) << '\n';
 	}
 }

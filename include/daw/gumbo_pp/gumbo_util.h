@@ -107,8 +107,18 @@ namespace daw::gumbo {
 		}
 	}
 
+	[[nodiscard]] constexpr bool
+	attribute_exists( GumboNode const &node, daw::string_view name ) noexcept {
+		auto const sz = get_attribute_count( node );
+		for( std::size_t n = 0; n < sz; ++n ) {
+			if( daw::string_view( get_attribute_node_at( node, n )->name ) == name ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-	constexpr daw::string_view node_text( GumboNode const &node ) {
+	constexpr daw::string_view node_content_text( GumboNode const &node ) {
 		switch( node.type ) {
 		case GumboNodeType::GUMBO_NODE_ELEMENT:
 			for( auto child : daw::gumbo::details::GumboVectorIterator(
