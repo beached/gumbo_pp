@@ -200,6 +200,28 @@ namespace daw::gumbo::match_details {
 
 			/// Match any node with named attribute who's value contains the
 			/// specified value
+			template<typename Container,
+			         std::enable_if_t<daw::traits::is_container_like_v<
+			                            daw::remove_cvref_t<Container>>,
+			                          std::nullptr_t> = nullptr>
+			static constexpr auto contains( daw::string_view attribute_name,
+			                                Container &&value_substrs ) noexcept {
+				return where(
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
+					  auto first = std::begin( value_substrs );
+					  auto last = std::end( value_substrs );
+					  return name == attribute_name and
+					         std::find_if( first,
+					                       last,
+					                       [&]( daw::string_view value_substr ) {
+						                       return value.find( value_substr ) !=
+						                              daw::string_view::npos;
+					                       } );
+				  } );
+			}
+
+			/// Match any node with named attribute who's value contains the
+			/// specified value
 			static constexpr auto contains( daw::string_view attribute_name,
 			                                daw::string_view value_substr ) noexcept {
 				return where(
@@ -366,9 +388,9 @@ namespace daw::gumbo::match_details {
 		}
 
 		template<typename Container,
-		         std::enable_if_t<daw::traits::is_container_like_v<
-		                            daw::remove_cvref_t<Container>>,
-		                          std::nullptr_t> = nullptr>
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
 		static constexpr auto contains( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
