@@ -28,28 +28,27 @@ int main( ) {
 	                            html.size( ) );
 
 	std::cout << "******\n";
-	daw::gumbo::find_all_if_oneach(
+	daw::gumbo::for_each_if(
 	  output->root,
 	  { },
+	  match::tag::types<GUMBO_TAG_DIV>,
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_content_text( node )
 		            << '\n';
 		  std::cout << "node inner text: "
 		            << daw::gumbo::node_inner_text( node, html ) << '\n';
-	  },
-	  match::tag::types<GUMBO_TAG_DIV> );
+	  } );
 
 	std::cout << "******\n";
 	std::cout << "All div.hello 's\n";
-	daw::gumbo::find_all_if_oneach(
+	daw::gumbo::for_each_if(
 	  output->root,
 	  { },
+	  match::tag::types<GUMBO_TAG_DIV> & match::class_type::is( "hello" ),
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
 		            << '\n';
-	  },
-	  match::tag::types<GUMBO_TAG_DIV>,
-	  match::class_type::is( "hello" ) );
+	  } );
 
 	std::cout << "******\n";
 	auto pos =

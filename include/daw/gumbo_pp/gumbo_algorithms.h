@@ -18,13 +18,13 @@
 namespace daw::gumbo {
 	/// When a node satisfies the predicates, copy the reference value to the
 	/// Output range
-	template<typename OutputIterator, typename... Predicates>
+	template<typename OutputIterator, typename Predicate>
 	static OutputIterator find_all_if( gumbo_node_iterator_t first,
 	                                   gumbo_node_iterator_t last,
 	                                   OutputIterator out_it,
-	                                   Predicates... preds ) {
+	                                   Predicate pred ) {
 		while( first != last ) {
-			if( first.get( ) and ( preds( *first ) and ... ) ) {
+			if( first.get( ) and pred( *first ) ) {
 				*out_it = *first;
 				++out_it;
 			}
@@ -34,25 +34,25 @@ namespace daw::gumbo {
 
 	/// When a node satisfies the predicates, pass the reference value to the
 	/// OnEach callback
-	template<typename OnEach, typename... Predicates>
-	static void find_all_if_oneach( gumbo_node_iterator_t first,
-	                                gumbo_node_iterator_t last,
-	                                OnEach onEach,
-	                                Predicates... preds ) {
+	template<typename Predicate, typename OnEach>
+	static void for_each_if( gumbo_node_iterator_t first,
+	                         gumbo_node_iterator_t last,
+	                         Predicate pred,
+	                         OnEach onEach ) {
 		while( first != last ) {
-			if( first and ( preds( *first ) and ... ) ) {
+			if( first and pred( *first ) ) {
 				onEach( *first );
 			}
 			++first;
 		}
 	}
 
-	template<typename... Predicates>
+	template<typename Predicate>
 	static gumbo_node_iterator_t find_if( gumbo_node_iterator_t first,
 	                                      gumbo_node_iterator_t last,
-	                                      Predicates... preds ) {
+	                                      Predicate pred ) {
 		while( first != last ) {
-			if( ( preds( *first ) and ... ) ) {
+			if( pred( *first ) ) {
 				return first;
 			}
 			++first;
