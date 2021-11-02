@@ -630,7 +630,7 @@ namespace daw::gumbo::match_details {
 	      std::
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
-	constexpr auto operator&( MatchL &&lhs, MatchR &&rhs ) noexcept {
+	constexpr auto operator&&( MatchL &&lhs, MatchR &&rhs ) noexcept {
 		return match_all{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
 	};
 

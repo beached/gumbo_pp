@@ -44,7 +44,7 @@ int main( ) {
 	daw::gumbo::for_each_if(
 	  output->root,
 	  { },
-	  match::tag::types<GUMBO_TAG_DIV> & match::class_type::is( "hello" ),
+	  match::tag::types<GUMBO_TAG_DIV> and match::class_type::is( "hello" ),
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
 		            << '\n';
