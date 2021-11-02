@@ -216,7 +216,7 @@ namespace daw::gumbo::match_details {
 					                       [&]( daw::string_view value_substr ) {
 						                       return value.find( value_substr ) !=
 						                              daw::string_view::npos;
-					                       } );
+					                       } ) != last;
 				  } );
 			}
 
@@ -616,7 +616,7 @@ namespace daw::gumbo::match_details {
 	      std::
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
-	constexpr auto operator|( MatchL &&lhs, MatchR &&rhs ) noexcept {
+	constexpr auto operator||( MatchL &&lhs, MatchR &&rhs ) noexcept {
 		return match_any{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
 	};
 
