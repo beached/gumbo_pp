@@ -240,6 +240,18 @@ namespace daw::gumbo {
 			};
 		}
 
+		static constexpr auto is_empty( daw::string_view html_doc ) noexcept {
+			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
+				return text.empty( );
+			} );
+		}
+
+		static constexpr auto is_not_empty( daw::string_view html_doc ) noexcept {
+			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
+				return not text.empty( );
+			} );
+		}
+
 		static constexpr auto contains( daw::string_view html_doc,
 		                                daw::string_view search_text ) noexcept {
 			return where( html_doc, [search_text]( daw::string_view text ) noexcept {
@@ -290,6 +302,15 @@ namespace daw::gumbo {
 				return text.find( search_text ) != daw::string_view::npos;
 			} );
 		}
+
+		static constexpr auto is_empty = []( auto const &node ) noexcept -> bool {
+			return node_content_text( node ).empty( );
+		};
+
+		static constexpr auto is_not_empty =
+		  []( auto const &node ) noexcept -> bool {
+			return not node_content_text( node ).empty( );
+		};
 
 		/// Match any node with outer text who's value starts with the specified
 		/// value
