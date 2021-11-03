@@ -11,6 +11,7 @@
 #include "details/find_attrib_if_impl.h"
 #include "details/gumbo_pp.h"
 #include "gumbo_node_iterator.h"
+#include "gumbo_text.h"
 
 #include <daw/daw_logic.h>
 #include <daw/daw_string_view.h>
