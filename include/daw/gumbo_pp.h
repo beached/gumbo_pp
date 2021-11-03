@@ -10,7 +10,7 @@
 
 #include "gumbo_pp/details/gumbo_pp.h"
 #include "gumbo_pp/gumbo_handle.h"
+#include "gumbo_pp/gumbo_matchers.h"
 #include "gumbo_pp/gumbo_node_iterator.h"
-#include "gumbo_pp/gumbo_selector.h"
 #include "gumbo_pp/gumbo_util.h"
 #include "gumbo_pp/gumbo_vector_iterator.h"

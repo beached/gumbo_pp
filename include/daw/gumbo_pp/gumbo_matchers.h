@@ -26,10 +26,10 @@ namespace daw::gumbo {
 		std::tuple<Matchers...> m_matchers;
 
 	public:
-		constexpr match_all( Matchers &&...matchers )
+		explicit constexpr match_all( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
-		constexpr match_all( Matchers const &...matchers )
+		explicit constexpr match_all( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
 
 		template<typename Node>
@@ -49,10 +49,10 @@ namespace daw::gumbo {
 		std::tuple<Matchers...> m_matchers;
 
 	public:
-		constexpr match_any( Matchers &&...matchers )
+		explicit constexpr match_any( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
-		constexpr match_any( Matchers const &...matchers )
+		explicit constexpr match_any( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
 
 		template<typename Node>
@@ -72,10 +72,10 @@ namespace daw::gumbo {
 		std::tuple<Matchers...> m_matchers;
 
 	public:
-		constexpr match_one( Matchers &&...matchers )
+		explicit constexpr match_one( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
-		constexpr match_one( Matchers const &...matchers )
+		explicit constexpr match_one( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
 
 		template<typename Node>
@@ -94,10 +94,10 @@ namespace daw::gumbo {
 	class match_not : private Matcher {
 
 	public:
-		constexpr match_not( Matcher &&matcher )
+		explicit constexpr match_not( Matcher &&matcher )
 		  : Matcher{ DAW_MOVE( matcher ) } {}
 
-		constexpr match_not( Matcher const &matcher )
+		explicit constexpr match_not( Matcher const &matcher )
 		  : Matcher{ matcher } {}
 
 		template<typename Node>
@@ -113,15 +113,17 @@ namespace daw::gumbo::match_details {
 	struct match_attribute {
 		/// Match any node that has an attribute where all the predicates returns
 		/// true
-		template<typename... Predicates>
-		static constexpr auto where( Predicates &&...preds ) noexcept {
+		template<typename Predicate, typename... Predicates>
+		static constexpr auto where( Predicate &&pred,
+		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) {
 				return details::find_attribute_if_impl(
 				         gumbo_node_iterator_t( &node ),
 				         [&]( GumboAttribute const &attr ) -> bool {
-					         return ( preds( daw::string_view( attr.name ),
-					                         daw::string_view( attr.value ) ) and
-					                  ... );
+					         auto name = daw::string_view( attr.name );
+					         auto value = daw::string_view( attr.value );
+					         return pred( name, value ) and
+					                ( preds( name, value ) and ... );
 				         } )
 				  .found;
 			};
@@ -191,38 +193,6 @@ namespace daw::gumbo::match_details {
 					return ( name == attribute_name ) or
 					       ( ( name == attribute_names ) or ... );
 				} );
-			}
-
-			// Match any node that has a matching attribute name
-			template<typename Container,
-			         std::enable_if_t<daw::traits::is_container_like_v<
-			                            daw::remove_cvref_t<Container>>,
-			                          std::nullptr_t> = nullptr>
-			static constexpr auto is_not( Container &&c ) noexcept {
-				return match_all{
-				  where( [=]( daw::string_view name, daw::string_view ) noexcept {
-					  auto first = std::begin( c );
-					  auto last = std::end( c );
-					  if( first == last ) {
-						  return true;
-					  }
-					  return not std::all_of( first, last, [&]( daw::string_view n ) {
-						  return n == name;
-					  } ) != last;
-				  } ),
-				  has_none };
-			}
-
-			// Match any node that does not have a matching attribute name
-			template<typename... StringView>
-			static constexpr auto is_not( daw::string_view attribute_name,
-			                              StringView &&...attribute_names ) noexcept {
-				return match_all{
-				  where( [=]( daw::string_view name, daw::string_view ) noexcept {
-					  return ( name == attribute_name ) and
-					         ( ( name != attribute_names ) and ... );
-				  } ),
-				  has_none };
 			}
 		};
 
@@ -432,85 +402,85 @@ namespace daw::gumbo::match_details {
 
 	struct match_class {
 		/// Match any node with a class that returns true for all the predicates
-		template<typename... Predicates>
-		static constexpr auto where( Predicates &&...preds ) noexcept {
+		template<typename Predicate, typename... Predicates>
+		static constexpr auto where( Predicate &&pred,
+		                             Predicates &&...preds ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
-				  return attribute_name == "class" and
+				  return attribute_name == "class" and pred( attribute_value ) and
 				         ( preds( attribute_value ) and ... );
+			  } );
+		}
+
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto is( daw::string_view attribute_name,
+		                          Container &&attribute_values ) noexcept {
+			return where(
+			  [=]( daw::string_view name, daw::string_view value ) noexcept {
+				  auto first = std::begin( attribute_values );
+				  auto last = std::end( attribute_values );
+				  if( first == last ) {
+					  return false;
+				  }
+				  return name == attribute_name and
+				         std::find( first, last, value ) != last;
 			  } );
 		}
 
 		/// Match any node with a class named that is one of the following
 		template<typename... StringView>
-		static constexpr auto is( StringView &&...class_names ) noexcept {
+		static constexpr auto is( daw::string_view class_name,
+		                          StringView &&...class_names ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
 				  return attribute_name == "class" and
-				         ( ( attribute_value == class_names ) or ... );
+				         ( attribute_value == class_name or
+				           ( ( attribute_value == class_names ) or ... ) );
 			  } );
-		}
-
-		/// Match any node with a class named that is not any of the following
-		template<typename... StringView>
-		static constexpr auto is_not( StringView &&...class_names ) noexcept {
-			return match_all(
-			  match_attribute::where(
-			    [=]( daw::string_view attribute_name,
-			         daw::string_view attribute_value ) noexcept -> bool {
-				    return attribute_name == "class" and
-				           ( ( attribute_value != class_names ) and ... );
-			    } ),
-			  match_attribute::has_none );
 		}
 	};
 
 	struct match_id {
 		/// Match any node with a id that returns true for the predicate
-		template<typename... Predicates>
-		static constexpr auto where( Predicates &&...preds ) noexcept {
+		template<typename Predicate, typename... Predicates>
+		static constexpr auto where( Predicate &&pred,
+		                             Predicates &&...preds ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
-				  return attribute_name == "id" and
+				  return attribute_name == "id" and pred( attribute_value ) and
 				         ( preds( attribute_value ) and ... );
 			  } );
 		}
 
 		/// Match any node with a id that is any of the following names
 		template<typename... StringView>
-		static constexpr auto is( StringView &&...id_names ) noexcept {
+		static constexpr auto is( daw::string_view id_name,
+		                          StringView &&...id_names ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
 				  return attribute_name == "id" and
-				         ( ( attribute_value == id_names ) or ... );
+				         ( attribute_value == id_name or
+				           ( ( attribute_value == id_names ) or ... ) );
 			  } );
-		}
-
-		/// Match any node with a id that is not any of the following names
-		template<typename... StringView>
-		static constexpr auto is_not( StringView &&...id_names ) noexcept {
-			return match_all{
-			  match_attribute::where(
-			    [=]( daw::string_view attribute_name,
-			         daw::string_view attribute_value ) noexcept -> bool {
-				    return attribute_name == "id" and
-				           ( ( attribute_value != id_names ) and ... );
-			    } ),
-			  match_attribute::has_none };
 		}
 	};
 
 	// For matching the content of tags like A
 	struct match_content_text {
 		/// Match any node with a id that returns true for the predicates
-		template<typename... Predicates>
-		static constexpr auto where( Predicates &&...preds ) noexcept {
+		template<typename Predicate, typename... Predicates>
+		static constexpr auto where( Predicate &&pred,
+		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
-				return ( preds( node_content_text( node ) ) and ... );
+				daw::string_view txt = node_content_text( node );
+				return pred( txt ) and ( preds( txt ) and ... );
 			};
 		}
 
@@ -555,40 +525,94 @@ namespace daw::gumbo::match_details {
 		};
 
 		/// Match any node with outer text who's value starts with and of the
-		/// specified value
+		/// specified values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto starts_with( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view prefix_text ) {
+					       return text.starts_with( prefix_text );
+				       } ) != last;
+			} );
+		}
+
+		/// Match any node with outer text who's value starts with and of the
+		/// specified values
 		template<typename... StringView>
-		static constexpr auto starts_with( StringView &&...prefix_text ) noexcept {
+		static constexpr auto starts_with( daw::string_view prefix_text,
+		                                   StringView &&...prefix_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
-				return ( text.starts_with( prefix_text ) or ... );
+				return text.starts_with( prefix_text ) or
+				       ( text.starts_with( prefix_texts ) or ... );
+			} );
+		}
+
+		/// Match any node with outer text who's value ends with and of the
+		/// specified values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto ends_with( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view suffix_text ) {
+					       return text.ends_with( suffix_text );
+				       } ) != last;
 			} );
 		}
 
 		/// Match any node with outer text who's value ends with the specified
 		/// value
 		template<typename... StringView>
-		static constexpr auto ends_with( StringView &&...suffix_text ) noexcept {
+		static constexpr auto ends_with( daw::string_view prefix_text,
+		                                 StringView &&...prefix_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
-				return ( text.ends_with( suffix_text ) or ... );
+				return text.starts_with( prefix_text ) or
+				       ( text.ends_with( prefix_texts ) or ... );
+			} );
+		}
+		/// Match any node with outer text who's value is equal to on of the
+		/// specified values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto is( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view cur_text ) {
+					       return text = cur_text;
+				       } ) != last;
 			} );
 		}
 
 		/// Match any node with outer text who's value is equal to on of the
 		/// specified values
 		template<typename... StringView>
-		static constexpr auto is( StringView &&...match_text ) noexcept {
+		static constexpr auto is( daw::string_view match_text,
+		                          StringView &&...match_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
-				return ( ( text == match_text ) or ... );
+				return ( text == match_text ) or ( ( text == match_texts ) or ... );
 			} );
 		}
 	};
 
 	struct match_inner_text {
 		/// Match any node with inner_text that returns true for the predicate
-		template<typename... Predicates>
+		template<typename Predicate, typename... Predicates>
 		static constexpr auto where( daw::string_view html_doc,
+		                             Predicate &&pred,
 		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
-				return ( preds( node_inner_text( node, html_doc ) ) and ... );
+				daw::string_view text = node_inner_text( node, html_doc );
+				return pred( text ) and ( preds( text ) and ... );
 			};
 		}
 
@@ -599,23 +623,53 @@ namespace daw::gumbo::match_details {
 			} );
 		}
 
-		/// Match any node with inner_text that is not empty
-		static constexpr auto is_not_empty( daw::string_view html_doc ) noexcept {
-			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
-				return not text.empty( );
+		/// Match any node with inner_text that contains search_text
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto contains( daw::string_view html_doc,
+		                                Container &&c ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view search_text ) {
+					       return text.find( search_text ) != daw::string_view::npos;
+				       } ) != last;
 			} );
 		}
 
 		/// Match any node with inner_text that contains search_text
+		template<typename... StringView>
 		static constexpr auto contains( daw::string_view html_doc,
-		                                daw::string_view search_text ) noexcept {
-			return where( html_doc, [search_text]( daw::string_view text ) noexcept {
-				return text.find( search_text ) != daw::string_view::npos;
+		                                daw::string_view search_text,
+		                                StringView &&...search_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return ( text.find( search_text ) != daw::string_view::npos ) or
+				       ( ( text.find( search_texts ) != daw::string_view::npos ) or
+				         ... );
 			} );
 		}
 
 		/// Match any node with inner text who's value starts with the specified
-		/// value
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto starts_with( daw::string_view html_doc,
+		                                   Container &&c ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view prefix_text ) {
+					return text.starts_with( prefix_text );
+				} );
+			} );
+		}
+
+		/// Match any node with inner text who's value starts with the specified
+		/// values
 		static constexpr auto starts_with( daw::string_view html_doc,
 		                                   daw::string_view prefix_text ) noexcept {
 			return where( html_doc, [prefix_text]( daw::string_view text ) noexcept {
@@ -624,40 +678,72 @@ namespace daw::gumbo::match_details {
 		}
 
 		/// Match any node with inner text who's value ends with the specified
-		/// value
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
 		static constexpr auto ends_with( daw::string_view html_doc,
-		                                 daw::string_view suffix_text ) noexcept {
-			return where( html_doc, [suffix_text]( daw::string_view text ) noexcept {
-				return text.ends_with( suffix_text );
+		                                 Container &&c ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view suffix_text ) {
+					return text.ends_with( suffix_text );
+				} );
+			} );
+		}
+
+		/// Match any node with inner text who's value ends with the specified
+		/// values
+		template<typename... StringView>
+		static constexpr auto ends_with( daw::string_view html_doc,
+		                                 daw::string_view suffix_text,
+		                                 StringView &&...suffix_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return text.ends_with( suffix_text ) or
+				       ( text.ends_with( suffix_texts ) or ... );
 			} );
 		}
 
 		/// Match any node with inner text who's value is equal to the specified
-		/// value
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
 		static constexpr auto is( daw::string_view html_doc,
-		                          daw::string_view match_text ) noexcept {
-			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
-				return text == match_text;
+		                          Container &&c ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view suffix_text ) {
+					return text == suffix_text;
+				} );
 			} );
 		}
 
-		/// Match any node with inner text who's value is not equal to the
-		/// specified value
-		static constexpr auto is_not( daw::string_view html_doc,
-		                              daw::string_view match_text ) noexcept {
-			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
-				return text != match_text;
+		/// Match any node with inner text who's value is equal to the specified
+		/// values
+		template<typename... StringView>
+		static constexpr auto is( daw::string_view html_doc,
+		                          daw::string_view suffix_text,
+		                          StringView &&...suffix_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return text == suffix_text or ( ( text == suffix_texts ) or ... );
 			} );
 		}
 	};
 
 	struct match_outer_text {
-		/// Match any node with outer_text that returns true for the predicate
-		template<typename... Predicates>
+		/// Match any node with outer_text that returns true for the predicates
+		template<typename Predicate, typename... Predicates>
 		static constexpr auto where( daw::string_view html_doc,
+		                             Predicate &&pred,
 		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
-				return ( preds( node_outer_text( node, html_doc ) ) and ... );
+				auto text = node_outer_text( node, html_doc );
+				return pred( text ) and ( preds( text ) and ... );
 			};
 		}
 
@@ -668,54 +754,113 @@ namespace daw::gumbo::match_details {
 			} );
 		}
 
-		/// Match any node with outer_text that is not empty
-		static constexpr auto is_not_empty( daw::string_view html_doc ) noexcept {
-			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
-				return not text.empty( );
+		/// Match any node with outer_text that contains match_text
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto contains( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view match_text ) {
+					return text.find( match_text ) != daw::string_view::npos;
+				} );
 			} );
 		}
 
-		/// Match any node with outer_text that contains search_text
+		/// Match any node with outer_text that contains match_text
+		template<typename... StringView>
 		static constexpr auto contains( daw::string_view html_doc,
-		                                daw::string_view search_text ) noexcept {
-			return where( html_doc, [search_text]( daw::string_view text ) noexcept {
-				return text.find( search_text ) != daw::string_view::npos;
+		                                daw::string_view match_text,
+		                                StringView &&...match_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return ( text.find( match_text ) != daw::string_view::npos ) or
+				       ( ( text.find( match_texts ) != daw::string_view::npos ) or
+				         ... );
 			} );
 		}
 
 		/// Match any node with outer text who's value starts with the specified
-		/// value
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto starts_with( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view match_text ) {
+					return text.template starts_with( match_text );
+				} );
+			} );
+		}
+
+		/// Match any node with outer text who's value starts with the specified
+		/// values
+		template<typename... StringView>
 		static constexpr auto starts_with( daw::string_view html_doc,
-		                                   daw::string_view prefix_text ) noexcept {
-			return where( html_doc, [prefix_text]( daw::string_view text ) noexcept {
-				return text.starts_with( prefix_text );
+		                                   daw::string_view match_text,
+		                                   StringView &&...match_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return text.starts_with( match_text ) or
+				       ( text.starts_with( match_texts ) or ... );
 			} );
 		}
 
 		/// Match any node with outer text who's value ends with the specified
-		/// value
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto ends_with( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view match_text ) {
+					return text.template ends_with( match_text );
+				} );
+			} );
+		}
+
+		/// Match any node with outer text who's value ends with the specified
+		/// values
+		template<typename... StringView>
 		static constexpr auto ends_with( daw::string_view html_doc,
-		                                 daw::string_view suffix_text ) noexcept {
-			return where( html_doc, [suffix_text]( daw::string_view text ) noexcept {
-				return text.ends_with( suffix_text );
+		                                 daw::string_view match_text,
+		                                 StringView &&...match_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return text.ends_with( match_text ) or
+				       ( text.ends_with( match_texts ) or ... );
 			} );
 		}
 
 		/// Match any node with outer text who's value is equal to the specified
-		/// value
-		static constexpr auto is( daw::string_view html_doc,
-		                          daw::string_view match_text ) noexcept {
-			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
-				return text == match_text;
+		/// values
+		template<typename Container,
+		         std::enable_if_t<
+		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
+		           std::nullptr_t> = nullptr>
+		static constexpr auto is( Container &&c ) noexcept {
+			return where( [=]( daw::string_view text ) noexcept {
+				auto first = std::begin( c );
+				auto last = std::end( c );
+				return std::find_if( first, last, [&]( daw::string_view match_text ) {
+					return text == match_text;
+				} );
 			} );
 		}
 
-		/// Match any node with outer text who's value is not equal to the
-		/// specified value
-		static constexpr auto is_not( daw::string_view html_doc,
-		                              daw::string_view match_text ) noexcept {
-			return where( html_doc, [match_text]( daw::string_view text ) noexcept {
-				return text != match_text;
+		/// Match any node with outer text who's value is equal to the specified
+		/// values
+		template<typename... StringView>
+		static constexpr auto is( daw::string_view html_doc,
+		                          daw::string_view match_text,
+		                          StringView &&...match_texts ) noexcept {
+			return where( html_doc, [=]( daw::string_view text ) noexcept {
+				return text == match_text or ( ( text == match_texts ) or ... );
 			} );
 		}
 	};
@@ -723,11 +868,15 @@ namespace daw::gumbo::match_details {
 	struct match_tag {
 		/// Match any node with where the tag type where all the Predicates return
 		/// true
-		template<typename... Predicates>
-		static constexpr auto where( Predicates &&...preds ) noexcept {
+		template<typename Predicate, typename... Predicates>
+		static constexpr auto where( Predicate &&pred,
+		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) noexcept -> bool {
-				return node.type == GUMBO_NODE_ELEMENT and
-				       ( preds( node.v.element.tag ) and ... );
+				if( node.type != GUMBO_NODE_ELEMENT ) {
+					return false;
+				}
+				auto tag_value = node.v.element.tag;
+				return pred( tag_value ) and ( preds( tag_value ) and ... );
 			};
 		}
 
