@@ -118,16 +118,16 @@ namespace daw::gumbo {
 		return false;
 	}
 
-	constexpr daw::string_view node_content_text( GumboNode const &node ) {
+	inline std::string node_content_text( GumboNode const &node ) {
 		switch( node.type ) {
-		case GumboNodeType::GUMBO_NODE_ELEMENT:
+		case GumboNodeType::GUMBO_NODE_ELEMENT: {
+			std::string result{ };
 			for( auto child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.element.children ) ) {
-				if( child->type == GUMBO_NODE_TEXT ) {
-					return { child->v.text.text };
-				}
+				result += node_content_text( *child );
 			}
-			break;
+			return result;
+		}
 		case GumboNodeType::GUMBO_NODE_DOCUMENT:
 			for( auto child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.document.children ) ) {

@@ -69,4 +69,18 @@ int main( ) {
 		std::cout << "Anchor content text: "
 		          << daw::gumbo::node_content_text( *pos ) << '\n';
 	}
+
+	constexpr daw::string_view html2 =
+	  R"html(<p id="example">This is an <strong>example</strong> paragraph</p>)html";
+	daw::gumbo::GumboHandle html2_hnd =
+	  gumbo_parse_with_options( &kGumboDefaultOptions,
+	                            html2.data( ),
+	                            html2.size( ) );
+	auto html2_rng = daw::gumbo::gumbo_node_iterator_t( html2_hnd->root );
+	auto html2_example_pos = std::find_if( html2_rng.begin( ),
+	                                       html2_rng.end( ),
+	                                       match::id::is( "example" ) );
+	assert( html2_example_pos != html2_rng.end( ) );
+	auto txt = daw::gumbo::node_content_text( *html2_example_pos );
+	std::cout << "example text: '" << txt << "'\n";
 }
