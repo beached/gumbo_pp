@@ -480,15 +480,18 @@ namespace daw::gumbo::match_details {
 		static constexpr auto where( Predicate &&pred,
 		                             Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
-				daw::string_view txt = node_content_text( node );
-				return pred( txt ) and ( preds( txt ) and ... );
+				auto txt = node_content_text( node );
+				daw::string_view sv = txt;
+				return pred( sv ) and ( preds( sv ) and ... );
 			};
 		}
 
 		template<typename Map, typename Predicate>
 		static constexpr auto map( Map &&map, Predicate &&pred ) noexcept {
 			return [=]( auto const &node ) -> bool {
-				return pred( map( node_content_text( node ) ) );
+				auto txt = node_content_text( node );
+				daw::string_view sv = txt;
+				return pred( map( sv ) );
 			};
 		}
 
