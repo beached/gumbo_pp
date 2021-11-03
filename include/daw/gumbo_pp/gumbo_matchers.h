@@ -519,11 +519,6 @@ namespace daw::gumbo::match_details {
 			return node_content_text( node ).empty( );
 		};
 
-		static constexpr auto is_not_empty =
-		  []( auto const &node ) noexcept -> bool {
-			return not node_content_text( node ).empty( );
-		};
-
 		/// Match any node with outer text who's value starts with and of the
 		/// specified values
 		template<typename Container,
