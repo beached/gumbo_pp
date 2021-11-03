@@ -19,7 +19,7 @@ int main( ) {
 	<head>
 		<title>Test</title>
 	</head>
-	<body><div class='hello'><b>Hey folks!</b></div><a href="http://www.google.com">Google</a></body>
+	<body><div class='hello'><b>Hey folks!</b></div> <a href="http://www.google.com">Google</a></body>
 </html>)html";
 	using daw::gumbo::match;
 	daw::gumbo::GumboHandle output =
@@ -27,6 +27,8 @@ int main( ) {
 	                            html.data( ),
 	                            html.size( ) );
 
+	std::cout << "******\n";
+	std::cout << daw::gumbo::node_content_text( *output->document ) << '\n';
 	std::cout << "******\n";
 
 	auto const first = daw::gumbo::gumbo_node_iterator_t( output->root );
@@ -50,7 +52,7 @@ int main( ) {
 	  last,
 	  match::tag::types<GUMBO_TAG_DIV> and match::class_type::is( "hello" ),
 	  [&]( GumboNode const &node ) {
-		  std::cout << "node text: " << daw::gumbo::node_outter_text( node, html )
+		  std::cout << "node text: " << daw::gumbo::node_outer_text( node, html )
 		            << '\n';
 	  } );
 
@@ -61,7 +63,7 @@ int main( ) {
 
 	if( pos ) {
 		std::cout << "Class hello outer text: "
-		          << daw::gumbo::node_outter_text( *pos, html ) << '\n';
+		          << daw::gumbo::node_outer_text( *pos, html ) << '\n';
 	}
 
 	pos = std::find_if( first, last, match::tag::types<GUMBO_TAG_A> );

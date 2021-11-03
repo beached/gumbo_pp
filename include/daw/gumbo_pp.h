@@ -12,5 +12,6 @@
 #include "gumbo_pp/gumbo_handle.h"
 #include "gumbo_pp/gumbo_matchers.h"
 #include "gumbo_pp/gumbo_node_iterator.h"
+#include "gumbo_pp/gumbo_text.h"
 #include "gumbo_pp/gumbo_util.h"
 #include "gumbo_pp/gumbo_vector_iterator.h"
