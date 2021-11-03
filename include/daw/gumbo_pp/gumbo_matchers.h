@@ -197,8 +197,7 @@ namespace daw::gumbo::match_details {
 			contains_prefix( daw::string_view attribute_name,
 			                 daw::string_view value_prefix ) noexcept {
 				return where(
-				  [attribute_name, value_prefix]( daw::string_view name,
-				                                  daw::string_view value ) noexcept {
+				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  if( name != attribute_name ) {
 						  return false;
 					  }
@@ -875,10 +874,13 @@ namespace daw::gumbo::match_details {
 		/// Match any node with where the tag type where the tag type matches on
 		/// of the specified types
 		template<GumboTag... tags>
-		static constexpr auto types = where( []( GumboTag tag_value ) {
-			static_assert( sizeof...( tags ) > 0, "Must supply at least one tag" );
+		static constexpr auto types = []( auto const &node ) {
+			if( node.type != GUMBO_NODE_ELEMENT ) {
+				return false;
+			}
+			auto tag_value = node.v.element.tag;
 			return ( ( tag_value == tags ) | ... );
-		} );
+		};
 	};
 
 	template<typename Result,
