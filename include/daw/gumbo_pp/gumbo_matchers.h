@@ -920,8 +920,8 @@ namespace daw::gumbo::match_details {
 	      std::
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
-	constexpr auto operator||( MatchL &&lhs, MatchR &&rhs ) noexcept {
-		return match_any{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
+	constexpr auto operator||( MatchL const &lhs, MatchR const &rhs ) noexcept {
+		return match_any{ lhs, rhs };
 	};
 
 	template<typename... MatchL, typename... MatchR>
@@ -946,8 +946,8 @@ namespace daw::gumbo::match_details {
 	      std::
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
-	constexpr auto operator&&( MatchL &&lhs, MatchR &&rhs ) noexcept {
-		return match_all{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
+	constexpr auto operator&&( MatchL const &lhs, MatchR const &rhs ) noexcept {
+		return match_all{ lhs, rhs };
 	};
 
 	template<typename... MatchL, typename... MatchR>
@@ -972,8 +972,8 @@ namespace daw::gumbo::match_details {
 	      std::
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
-	constexpr auto operator^( MatchL &&lhs, MatchR &&rhs ) noexcept {
-		return match_one{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
+	constexpr auto operator^( MatchL const &lhs, MatchR const &rhs ) noexcept {
+		return match_one{ lhs, rhs };
 	};
 
 	template<typename Matcher,
