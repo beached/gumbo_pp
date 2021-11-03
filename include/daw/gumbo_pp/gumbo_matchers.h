@@ -537,11 +537,16 @@ namespace daw::gumbo::match_details {
 		static constexpr auto contains( Container &&c ) noexcept {
 			return [=]( auto const &node ) noexcept {
 				auto text = node_content_text( node );
+				if( text.empty( ) ) {
+					return false;
+				}
 				auto first = std::begin( c );
 				auto last = std::end( c );
-				return std::find_if( first, last, [&]( daw::string_view cur_text ) {
-					       return cur_text == text;
-				       } ) != last;
+				auto const fpos =
+				  std::find_if( first, last, [&]( daw::string_view cur_text ) {
+					  return text.find( cur_text ) != std::string::npos;
+				  } );
+				return fpos != last;
 			};
 		}
 
@@ -550,9 +555,8 @@ namespace daw::gumbo::match_details {
 		                                StringView &&...search_texts ) noexcept {
 			return [=]( auto const &node ) noexcept -> bool {
 				auto text = node_content_text( node );
-				return ( text.find( search_text ) != daw::string_view::npos ) or
-				       ( ( text.find( search_texts ) != daw::string_view::npos ) or
-				         ... );
+				return ( text.find( search_text ) != std::string::npos ) or
+				       ( ( text.find( search_texts ) != std::string::npos ) or ... );
 			};
 		}
 
