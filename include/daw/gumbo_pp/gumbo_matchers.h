@@ -23,10 +23,9 @@
 
 namespace daw::gumbo {
 	template<typename... Matchers>
-	class match_all {
+	struct match_all {
 		daw::tuple2<Matchers...> m_matchers;
 
-	public:
 		explicit constexpr match_all( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
@@ -882,6 +881,31 @@ namespace daw::gumbo::match_details {
 		} );
 	};
 
+	template<typename Result,
+	         typename MatchL,
+	         typename MatchR,
+	         std::size_t... LIdx,
+	         std::size_t... RIdx>
+	constexpr Result opCombine( MatchL const &lhs,
+	                            MatchR const &rhs,
+	                            std::index_sequence<LIdx...>,
+	                            std::index_sequence<RIdx...> ) {
+		return Result{ daw::get<LIdx>( lhs.m_matchers )...,
+		               daw::get<RIdx>( rhs.m_matchers )... };
+	}
+
+	template<typename... MatchL, typename... MatchR>
+	constexpr match_any<MatchL..., MatchR...>
+	operator||( match_any<MatchL...> const &lhs,
+	            match_any<MatchR...> const &rhs ) {
+		// This will keep the stack depths smaller
+		return opCombine<match_any<MatchL..., MatchR...>>(
+		  lhs,
+		  rhs,
+		  std::make_index_sequence<sizeof...( MatchL )>{ },
+		  std::make_index_sequence<sizeof...( MatchR )>{ } );
+	}
+
 	template<
 	  typename MatchL,
 	  typename MatchR,
@@ -896,6 +920,18 @@ namespace daw::gumbo::match_details {
 		return match_any{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
 	};
 
+	template<typename... MatchL, typename... MatchR>
+	constexpr match_all<MatchL..., MatchR...>
+	operator&&( match_all<MatchL...> const &lhs,
+	            match_all<MatchR...> const &rhs ) {
+		// This will keep the stack depths smaller
+		return opCombine<match_all<MatchL..., MatchR...>>(
+		  lhs,
+		  rhs,
+		  std::make_index_sequence<sizeof...( MatchL )>{ },
+		  std::make_index_sequence<sizeof...( MatchR )>{ } );
+	}
+
 	template<
 	  typename MatchL,
 	  typename MatchR,
@@ -909,6 +945,18 @@ namespace daw::gumbo::match_details {
 	constexpr auto operator&&( MatchL &&lhs, MatchR &&rhs ) noexcept {
 		return match_all{ DAW_FWD2( MatchL, lhs ), DAW_FWD2( MatchR, rhs ) };
 	};
+
+	template<typename... MatchL, typename... MatchR>
+	constexpr match_one<MatchL..., MatchR...>
+	operator^( match_one<MatchL...> const &lhs,
+	           match_one<MatchR...> const &rhs ) {
+		// This will keep the stack depths smaller
+		return opCombine<match_one<MatchL..., MatchR...>>(
+		  lhs,
+		  rhs,
+		  std::make_index_sequence<sizeof...( MatchL )>{ },
+		  std::make_index_sequence<sizeof...( MatchR )>{ } );
+	}
 
 	template<
 	  typename MatchL,
