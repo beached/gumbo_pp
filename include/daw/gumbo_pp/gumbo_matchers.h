@@ -26,6 +26,9 @@ namespace daw::gumbo {
 	struct match_all {
 		daw::tuple2<Matchers...> m_matchers;
 
+		constexpr match_all( daw::tuple2<Matchers...> &&m )
+		  : m_matchers( DAW_MOVE( m ) ) {}
+
 		explicit constexpr match_all( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
@@ -38,15 +41,29 @@ namespace daw::gumbo {
 				return ( DAW_FWD( matchers )( node ) and ... );
 			} );
 		}
+
+		template<typename Matcher>
+		constexpr match_all<Matchers..., Matcher>
+		append( Matcher const &other ) const {
+			return { daw::tuple2_cat( m_matchers, daw::tuple2{ other } ) };
+		}
+
+		template<typename... Ms>
+		constexpr match_all<Matchers..., Ms...>
+		append( match_all<Ms...> const &other ) const {
+			return { daw::tuple2_cat( m_matchers, other.m_matchers ) };
+		}
 	};
 	template<typename... Matchers>
 	match_all( Matchers... ) -> match_all<Matchers...>;
 
 	template<typename... Matchers>
-	class match_any {
+	struct match_any {
 		daw::tuple2<Matchers...> m_matchers;
 
-	public:
+		constexpr match_any( daw::tuple2<Matchers...> &&m )
+		  : m_matchers( DAW_MOVE( m ) ) {}
+
 		explicit constexpr match_any( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
@@ -59,15 +76,29 @@ namespace daw::gumbo {
 				return ( DAW_FWD( matchers )( node ) or ... );
 			} );
 		}
+
+		template<typename Matcher>
+		constexpr match_any<Matchers..., Matcher>
+		append( Matcher const &other ) const {
+			return { daw::tuple2_cat( m_matchers, daw::tuple2{ other } ) };
+		}
+
+		template<typename... Ms>
+		constexpr match_any<Matchers..., Ms...>
+		append( match_any<Ms...> const &other ) const {
+			return { daw::tuple2_cat( m_matchers, other.m_matchers ) };
+		}
 	};
 	template<typename... Matchers>
 	match_any( Matchers... ) -> match_any<Matchers...>;
 
 	template<typename... Matchers>
-	class match_one {
+	struct match_one {
 		daw::tuple2<Matchers...> m_matchers;
 
-	public:
+		constexpr match_one( daw::tuple2<Matchers...> &&m )
+		  : m_matchers( DAW_MOVE( m ) ) {}
+
 		explicit constexpr match_one( Matchers &&...matchers )
 		  : m_matchers{ DAW_MOVE( matchers )... } {}
 
@@ -79,6 +110,18 @@ namespace daw::gumbo {
 			return daw::apply( m_matchers, [&]( auto &&...matchers ) -> bool {
 				return ( static_cast<bool>( DAW_FWD( matchers )( node ) ) ^ ... );
 			} );
+		}
+
+		template<typename Matcher>
+		constexpr match_one<Matchers..., Matcher>
+		append( Matcher const &other ) const {
+			return { daw::tuple2_cat( m_matchers, daw::tuple2{ other } ) };
+		}
+
+		template<typename... Ms>
+		constexpr match_one<Matchers..., Ms...>
+		append( match_one<Ms...> const &other ) const {
+			return { daw::tuple2_cat( m_matchers, other.m_matchers ) };
 		}
 	};
 	template<typename... Matchers>
@@ -885,31 +928,6 @@ namespace daw::gumbo::match_details {
 		};
 	};
 
-	template<typename Result,
-	         typename MatchL,
-	         typename MatchR,
-	         std::size_t... LIdx,
-	         std::size_t... RIdx>
-	constexpr Result opCombine( MatchL const &lhs,
-	                            MatchR const &rhs,
-	                            std::index_sequence<LIdx...>,
-	                            std::index_sequence<RIdx...> ) {
-		return Result{ daw::get<LIdx>( lhs.m_matchers )...,
-		               daw::get<RIdx>( rhs.m_matchers )... };
-	}
-
-	template<typename... MatchL, typename... MatchR>
-	constexpr match_any<MatchL..., MatchR...>
-	operator||( match_any<MatchL...> const &lhs,
-	            match_any<MatchR...> const &rhs ) {
-		// This will keep the stack depths smaller
-		return opCombine<match_any<MatchL..., MatchR...>>(
-		  lhs,
-		  rhs,
-		  std::make_index_sequence<sizeof...( MatchL )>{ },
-		  std::make_index_sequence<sizeof...( MatchR )>{ } );
-	}
-
 	template<
 	  typename MatchL,
 	  typename MatchR,
@@ -921,20 +939,8 @@ namespace daw::gumbo::match_details {
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
 	constexpr auto operator||( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_any{ lhs, rhs };
+		return match_any{ lhs }.append( match_any{ rhs } );
 	};
-
-	template<typename... MatchL, typename... MatchR>
-	constexpr match_all<MatchL..., MatchR...>
-	operator&&( match_all<MatchL...> const &lhs,
-	            match_all<MatchR...> const &rhs ) {
-		// This will keep the stack depths smaller
-		return opCombine<match_all<MatchL..., MatchR...>>(
-		  lhs,
-		  rhs,
-		  std::make_index_sequence<sizeof...( MatchL )>{ },
-		  std::make_index_sequence<sizeof...( MatchR )>{ } );
-	}
 
 	template<
 	  typename MatchL,
@@ -947,20 +953,8 @@ namespace daw::gumbo::match_details {
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
 	constexpr auto operator&&( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_all{ lhs, rhs };
+		return match_all{ lhs }.append( match_all{ rhs } );
 	};
-
-	template<typename... MatchL, typename... MatchR>
-	constexpr match_one<MatchL..., MatchR...>
-	operator^( match_one<MatchL...> const &lhs,
-	           match_one<MatchR...> const &rhs ) {
-		// This will keep the stack depths smaller
-		return opCombine<match_one<MatchL..., MatchR...>>(
-		  lhs,
-		  rhs,
-		  std::make_index_sequence<sizeof...( MatchL )>{ },
-		  std::make_index_sequence<sizeof...( MatchR )>{ } );
-	}
 
 	template<
 	  typename MatchL,
@@ -973,7 +967,7 @@ namespace daw::gumbo::match_details {
 	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
 	    std::nullptr_t> = nullptr>
 	constexpr auto operator^( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_one{ lhs, rhs };
+		return match_one{ lhs }.append( match_one{ rhs } );
 	};
 
 	template<typename Matcher,
