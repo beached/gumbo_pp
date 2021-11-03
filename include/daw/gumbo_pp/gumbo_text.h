@@ -23,8 +23,11 @@ namespace daw::gumbo {
 		switch( node.type ) {
 		case GumboNodeType::GUMBO_NODE_ELEMENT: {
 			std::string result{ };
-			for( auto const &child : daw::gumbo::details::GumboVectorIterator(
+			for( GumboNode *child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.element.children ) ) {
+				if( not child ) {
+					continue;
+				}
 				if( child->type == GUMBO_NODE_TEXT ) {
 					result += daw::string_view( child->v.text.text );
 				} else {
@@ -35,8 +38,11 @@ namespace daw::gumbo {
 		}
 		case GumboNodeType::GUMBO_NODE_DOCUMENT: {
 			std::string result{ };
-			for( auto const &child : daw::gumbo::details::GumboVectorIterator(
+			for( GumboNode *child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.document.children ) ) {
+				if( not child ) {
+					continue;
+				}
 				if( child->type == GUMBO_NODE_TEXT ) {
 					result += daw::string_view( child->v.text.text );
 				} else {

@@ -492,23 +492,25 @@ namespace daw::gumbo::match_details {
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
 		static constexpr auto contains( Container &&c ) noexcept {
-			return where( [=]( daw::string_view text ) noexcept {
+			return [=]( auto const &node ) noexcept {
+				auto text = node_content_text( node );
 				auto first = std::begin( c );
 				auto last = std::end( c );
 				return std::find_if( first, last, [&]( daw::string_view cur_text ) {
 					       return cur_text == text;
 				       } ) != last;
-			} );
+			};
 		}
 
 		template<typename... StringView>
 		static constexpr auto contains( daw::string_view search_text,
 		                                StringView &&...search_texts ) noexcept {
-			return where( [=]( daw::string_view text ) noexcept -> bool {
+			return [=]( auto const &node ) noexcept -> bool {
+				auto text = node_content_text( node );
 				return ( text.find( search_text ) != daw::string_view::npos ) or
 				       ( ( text.find( search_texts ) != daw::string_view::npos ) or
 				         ... );
-			} );
+			};
 		}
 
 		static constexpr auto is_empty = []( auto const &node ) noexcept -> bool {
