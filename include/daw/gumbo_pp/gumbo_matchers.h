@@ -15,16 +15,16 @@
 
 #include <daw/daw_logic.h>
 #include <daw/daw_string_view.h>
+#include <daw/daw_tuple2.h>
 
 #include <cstddef>
 #include <functional>
-#include <tuple>
 #include <type_traits>
 
 namespace daw::gumbo {
 	template<typename... Matchers>
 	class match_all {
-		std::tuple<Matchers...> m_matchers;
+		daw::tuple2<Matchers...> m_matchers;
 
 	public:
 		explicit constexpr match_all( Matchers &&...matchers )
@@ -35,11 +35,9 @@ namespace daw::gumbo {
 
 		template<typename Node>
 		constexpr bool operator( )( Node const &node ) const {
-			return std::apply(
-			  [&]( auto &&...matchers ) -> bool {
-				  return ( DAW_FWD( matchers )( node ) and ... );
-			  },
-			  m_matchers );
+			return daw::apply( m_matchers, [&]( auto &&...matchers ) -> bool {
+				return ( DAW_FWD( matchers )( node ) and ... );
+			} );
 		}
 	};
 	template<typename... Matchers>
@@ -47,7 +45,7 @@ namespace daw::gumbo {
 
 	template<typename... Matchers>
 	class match_any {
-		std::tuple<Matchers...> m_matchers;
+		daw::tuple2<Matchers...> m_matchers;
 
 	public:
 		explicit constexpr match_any( Matchers &&...matchers )
@@ -58,11 +56,9 @@ namespace daw::gumbo {
 
 		template<typename Node>
 		constexpr bool operator( )( Node const &node ) const {
-			return std::apply(
-			  [&]( auto &&...matchers ) -> bool {
-				  return ( DAW_FWD( matchers )( node ) or ... );
-			  },
-			  m_matchers );
+			return daw::apply( m_matchers, [&]( auto &&...matchers ) -> bool {
+				return ( DAW_FWD( matchers )( node ) or ... );
+			} );
 		}
 	};
 	template<typename... Matchers>
@@ -70,7 +66,7 @@ namespace daw::gumbo {
 
 	template<typename... Matchers>
 	class match_one {
-		std::tuple<Matchers...> m_matchers;
+		daw::tuple2<Matchers...> m_matchers;
 
 	public:
 		explicit constexpr match_one( Matchers &&...matchers )
@@ -81,11 +77,9 @@ namespace daw::gumbo {
 
 		template<typename Node>
 		constexpr bool operator( )( Node const &node ) const {
-			return std::apply(
-			  [&]( auto &&...matchers ) -> bool {
-				  return ( static_cast<bool>( DAW_FWD( matchers )( node ) ) ^ ... );
-			  },
-			  m_matchers );
+			return daw::apply( m_matchers, [&]( auto &&...matchers ) -> bool {
+				return ( static_cast<bool>( DAW_FWD( matchers )( node ) ) ^ ... );
+			} );
 		}
 	};
 	template<typename... Matchers>
