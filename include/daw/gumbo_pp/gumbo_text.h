@@ -26,7 +26,7 @@ namespace daw::gumbo {
 			for( auto const &child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.element.children ) ) {
 				if( child->type == GUMBO_NODE_TEXT ) {
-					result += std::string_view( child->v.text.text );
+					result += daw::string_view( child->v.text.text );
 				} else {
 					result += node_content_text( *child );
 				}
@@ -38,7 +38,7 @@ namespace daw::gumbo {
 			for( auto const &child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.document.children ) ) {
 				if( child->type == GUMBO_NODE_TEXT ) {
-					result += std::string_view( child->v.text.text );
+					result += daw::string_view( child->v.text.text );
 				} else {
 					result += node_content_text( *child );
 				}
@@ -46,7 +46,7 @@ namespace daw::gumbo {
 			return result;
 		}
 		default:
-			return static_cast<std::string>( std::string_view( node.v.text.text ) );
+			return static_cast<std::string>( daw::string_view( node.v.text.text ) );
 		}
 	}
 
