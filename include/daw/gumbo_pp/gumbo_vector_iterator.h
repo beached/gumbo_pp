@@ -12,6 +12,7 @@
 
 #include <daw/daw_not_null.h>
 
+#include <cassert>
 #include <cstddef>
 #include <gumbo.h>
 #include <iterator>
@@ -53,11 +54,17 @@ namespace daw::gumbo::details {
 			return reinterpret_cast<ChildType *>( m_vector->data );
 		}
 
+		[[nodiscard]] constexpr explicit operator bool( ) const {
+			return static_cast<bool>( m_vector->data );
+		}
+
 		[[nodiscard]] inline reference operator*( ) const {
+			assert( m_vector->data );
 			return data( )[m_index];
 		}
 
 		[[nodiscard]] inline pointer operator->( ) const {
+			assert( m_vector->data );
 			return data( );
 		}
 
