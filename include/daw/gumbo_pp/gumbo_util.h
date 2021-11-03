@@ -124,7 +124,11 @@ namespace daw::gumbo {
 			std::string result{ };
 			for( auto child : daw::gumbo::details::GumboVectorIterator(
 			       node.v.element.children ) ) {
-				result += node_content_text( *child );
+				if( child->type == GUMBO_NODE_TEXT ) {
+					result += child->v.text.text;
+				} else {
+					result += node_content_text( *child );
+				}
 			}
 			return result;
 		}
