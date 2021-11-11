@@ -79,10 +79,19 @@ int main( ) {
 	                            html2.data( ),
 	                            html2.size( ) );
 	auto html2_rng = daw::gumbo::gumbo_node_iterator_t( html2_hnd->root );
-	auto html2_example_pos = std::find_if( html2_rng.begin( ),
-	                                       html2_rng.end( ),
-	                                       match::id::is( "example" ) );
+	auto html2_example_pos = std::find_if(
+	  html2_rng.begin( ),
+	  html2_rng.end( ),
+	  match::tag::types<GumboTag::GUMBO_TAG_P> and match::id::is( "example" ) );
 	assert( html2_example_pos != html2_rng.end( ) );
 	auto txt = daw::gumbo::node_content_text( *html2_example_pos );
 	std::cout << "example text: '" << txt << "'\n";
+	auto some =
+	  daw::algorithm::find_some( html2_rng.begin( ),
+	                             html2_rng.end( ),
+	                             match::tag::types<GumboTag::GUMBO_TAG_P>,
+	                             match::id::is( "example" ) );
+	assert( some.position != html2_rng.end( ) );
+	assert( std::find( some.results.begin( ), some.results.end( ), false ) ==
+	        some.results.end( ) );
 }
