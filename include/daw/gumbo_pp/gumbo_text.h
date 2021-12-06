@@ -17,6 +17,7 @@
 
 #include <gumbo.h>
 #include <string>
+#include <string_view>
 
 namespace daw::gumbo {
 	inline std::string node_content_text( GumboNode const &node ) {
@@ -29,7 +30,7 @@ namespace daw::gumbo {
 					continue;
 				}
 				if( child->type == GUMBO_NODE_TEXT ) {
-					result += daw::string_view( child->v.text.text );
+					result += std::string_view( child->v.text.text );
 				} else {
 					result += node_content_text( *child );
 				}
@@ -44,7 +45,7 @@ namespace daw::gumbo {
 					continue;
 				}
 				if( child->type == GUMBO_NODE_TEXT ) {
-					result += daw::string_view( child->v.text.text );
+					result += std::string_view( child->v.text.text );
 				} else {
 					result += node_content_text( *child );
 				}

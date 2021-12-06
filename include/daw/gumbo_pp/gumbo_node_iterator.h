@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <gumbo.h>
 #include <iterator>
+#include <string_view>
 
 namespace daw::gumbo {
 	struct gumbo_node_iterator_t {
@@ -121,6 +122,42 @@ namespace daw::gumbo {
 		operator!=( gumbo_node_iterator_t const &lhs,
 		            gumbo_node_iterator_t const &rhs ) noexcept {
 			return lhs.m_node != rhs.m_node;
+		}
+	};
+
+	class gumbo_range {
+		GumboHandle m_handle;
+		gumbo_node_iterator_t m_first{ };
+		gumbo_node_iterator_t m_last{ };
+
+	public:
+		explicit gumbo_range( GumboHandle &&handle );
+		explicit gumbo_range( std::string_view html_document,
+		                      GumboOptions options );
+		explicit gumbo_range( std::string_view html_document );
+
+		[[nodiscard]] inline gumbo_node_iterator_t begin( ) const {
+			return m_first;
+		}
+
+		[[nodiscard]] inline gumbo_node_iterator_t end( ) const {
+			return m_last;
+		}
+
+		[[nodiscard]] inline GumboOutput *get( ) {
+			return m_handle.get( );
+		}
+
+		[[nodiscard]] inline GumboNode *document( ) {
+			return m_handle->document;
+		}
+
+		[[nodiscard]] inline GumboNode *root( ) {
+			return m_handle->root;
+		}
+
+		[[nodiscard]] inline GumboVector errors( ) {
+			return m_handle->errors;
 		}
 	};
 } // namespace daw::gumbo

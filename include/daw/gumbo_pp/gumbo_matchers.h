@@ -22,6 +22,8 @@
 #include <type_traits>
 
 namespace daw::gumbo {
+	// A combined predicate that returns true when all of it's predicates return
+	// true
 	template<typename... Matchers>
 	struct match_all {
 		daw::tuple2<Matchers...> m_matchers;
@@ -57,6 +59,7 @@ namespace daw::gumbo {
 	template<typename... Matchers>
 	match_all( Matchers... ) -> match_all<Matchers...>;
 
+	// A combined predicate that returns true if any of the predicates return true
 	template<typename... Matchers>
 	struct match_any {
 		daw::tuple2<Matchers...> m_matchers;
@@ -89,6 +92,8 @@ namespace daw::gumbo {
 			return { daw::tuple2_cat( m_matchers, other.m_matchers ) };
 		}
 	};
+
+
 	template<typename... Matchers>
 	match_any( Matchers... ) -> match_any<Matchers...>;
 
