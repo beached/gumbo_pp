@@ -9,7 +9,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project("daw-gumbo-pp"
-		VERSION "0.2.0"
+		VERSION "0.3.0"
 		DESCRIPTION "C++ helpers and abstractions over Google Gumbo HTML parser"
 		HOMEPAGE_URL "https://github.com/beached/daw-gumbo-pp"
 		LANGUAGES C CXX)

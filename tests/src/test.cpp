@@ -28,19 +28,19 @@ int main( ) {
 	std::cout << daw::gumbo::node_content_text( *doc_range.document( ) ) << '\n';
 	std::cout << "****************\n";
 
-	using daw::gumbo::match;
+	namespace match = daw::gumbo::match;
 	daw::algorithm::for_each_if(
 	  doc_range.begin( ),
 	  doc_range.end( ),
-	  match::tag::types<GUMBO_TAG_DIV>,
+	  match::tags::DIV,
 	  [&]( GumboNode const &node ) {
 		  std::cout << "****************\n";
 		  std::cout << "node text:\n";
-			std::cout << "****************\n";
+		  std::cout << "****************\n";
 		  std::cout << daw::gumbo::node_content_text( node ) << '\n';
 		  std::cout << "****************\n";
 		  std::cout << "node inner text:\n";
-			std::cout << "****************\n";
+		  std::cout << "****************\n";
 		  std::cout << daw::gumbo::node_inner_text( node, html ) << '\n';
 		  std::cout << "****************\n";
 	  } );
@@ -51,7 +51,7 @@ int main( ) {
 	daw::algorithm::for_each_if(
 	  doc_range.begin( ),
 	  doc_range.end( ),
-	  match::tag::types<GUMBO_TAG_DIV> and match::class_type::is( "hello" ),
+	  match::tags::DIV and match::class_type::is( "hello" ),
 	  [&]( GumboNode const &node ) {
 		  std::cout << "node text: " << daw::gumbo::node_outer_text( node, html )
 		            << '\n';
@@ -68,9 +68,7 @@ int main( ) {
 	}
 
 	std::cout << "****************\n";
-	pos = std::find_if( doc_range.begin( ),
-	                    doc_range.end( ),
-	                    match::tag::types<GUMBO_TAG_A> );
+	pos = std::find_if( doc_range.begin( ), doc_range.end( ), match::tags::A );
 	if( pos ) {
 		std::cout << "Anchor content text:\n";
 		std::cout << "****************\n";
@@ -85,20 +83,19 @@ int main( ) {
 	                            html2.data( ),
 	                            html2.size( ) );
 	auto html2_rng = daw::gumbo::gumbo_node_iterator_t( html2_hnd->root );
-	auto html2_example_pos = std::find_if(
-	  html2_rng.begin( ),
-	  html2_rng.end( ),
-	  match::tag::types<GumboTag::GUMBO_TAG_P> and match::id::is( "example" ) );
+	auto html2_example_pos =
+	  std::find_if( html2_rng.begin( ),
+	                html2_rng.end( ),
+	                match::tags::P and match::id::is( "example" ) );
 
 	assert( html2_example_pos != html2_rng.end( ) );
 	auto txt = daw::gumbo::node_content_text( *html2_example_pos );
 	std::cout << "****************\n";
 	std::cout << "example text: '" << txt << "'\n";
-	auto some =
-	  daw::algorithm::find_some( html2_rng.begin( ),
-	                             html2_rng.end( ),
-	                             match::tag::types<GumboTag::GUMBO_TAG_P>,
-	                             match::id::is( "example" ) );
+	auto some = daw::algorithm::find_some( html2_rng.begin( ),
+	                                       html2_rng.end( ),
+	                                       match::tags::P,
+	                                       match::id::is( "example" ) );
 	assert( some.position != html2_rng.end( ) );
 	assert( std::find( some.results.begin( ), some.results.end( ), false ) ==
 	        some.results.end( ) );

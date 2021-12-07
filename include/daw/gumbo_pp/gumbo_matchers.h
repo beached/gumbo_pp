@@ -93,7 +93,6 @@ namespace daw::gumbo {
 		}
 	};
 
-
 	template<typename... Matchers>
 	match_any( Matchers... ) -> match_any<Matchers...>;
 
@@ -990,7 +989,7 @@ namespace daw::gumbo::match_details {
 } // namespace daw::gumbo::match_details
 
 namespace daw::gumbo {
-	struct match {
+	namespace match {
 		using attribute = match_details::match_attribute;
 		using class_type = match_details::match_class;
 		using id = match_details::match_id;
@@ -998,5 +997,308 @@ namespace daw::gumbo {
 		using outer_text = match_details::match_outer_text;
 		using content_text = match_details::match_content_text;
 		using tag = match_details::match_tag;
-	};
+
+		namespace tags {
+			inline constexpr auto HTML =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HTML>;
+			inline constexpr auto HEAD =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HEAD>;
+			inline constexpr auto TITLE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TITLE>;
+			inline constexpr auto BASE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BASE>;
+			inline constexpr auto LINK =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LINK>;
+			inline constexpr auto META =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_META>;
+			inline constexpr auto STYLE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STYLE>;
+			inline constexpr auto SCRIPT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SCRIPT>;
+			inline constexpr auto NOSCRIPT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOSCRIPT>;
+			inline constexpr auto TEMPLATE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TEMPLATE>;
+			inline constexpr auto BODY =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BODY>;
+			inline constexpr auto ARTICLE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ARTICLE>;
+			inline constexpr auto SECTION =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SECTION>;
+			inline constexpr auto NAV =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NAV>;
+			inline constexpr auto ASIDE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ASIDE>;
+			inline constexpr auto H1 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H1>;
+			inline constexpr auto H2 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H2>;
+			inline constexpr auto H3 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H3>;
+			inline constexpr auto H4 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H4>;
+			inline constexpr auto H5 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H5>;
+			inline constexpr auto H6 =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H6>;
+			inline constexpr auto HGROUP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HGROUP>;
+			inline constexpr auto HEADER =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HEADER>;
+			inline constexpr auto FOOTER =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FOOTER>;
+			inline constexpr auto ADDRESS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ADDRESS>;
+			inline constexpr auto P =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_P>;
+			inline constexpr auto HR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HR>;
+			inline constexpr auto PRE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PRE>;
+			inline constexpr auto BLOCKQUOTE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BLOCKQUOTE>;
+			inline constexpr auto OL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OL>;
+			inline constexpr auto UL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_UL>;
+			inline constexpr auto LI =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LI>;
+			inline constexpr auto DL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DL>;
+			inline constexpr auto DT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DT>;
+			inline constexpr auto DD =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DD>;
+			inline constexpr auto FIGURE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIGURE>;
+			inline constexpr auto FIGCAPTION =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIGCAPTION>;
+			inline constexpr auto MAIN =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MAIN>;
+			inline constexpr auto DIV =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DIV>;
+			inline constexpr auto A =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_A>;
+			inline constexpr auto EM =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_EM>;
+			inline constexpr auto STRONG =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STRONG>;
+			inline constexpr auto SMALL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SMALL>;
+			inline constexpr auto S =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_S>;
+			inline constexpr auto CITE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CITE>;
+			inline constexpr auto Q =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_Q>;
+			inline constexpr auto DFN =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DFN>;
+			inline constexpr auto ABBR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ABBR>;
+			inline constexpr auto DATA =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DATA>;
+			inline constexpr auto TIME =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TIME>;
+			inline constexpr auto CODE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CODE>;
+			inline constexpr auto VAR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_VAR>;
+			inline constexpr auto SAMP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SAMP>;
+			inline constexpr auto KBD =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_KBD>;
+			inline constexpr auto SUB =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUB>;
+			inline constexpr auto SUP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUP>;
+			inline constexpr auto I =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_I>;
+			inline constexpr auto B =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_B>;
+			inline constexpr auto U =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_U>;
+			inline constexpr auto MARK =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MARK>;
+			inline constexpr auto RUBY =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RUBY>;
+			inline constexpr auto RT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RT>;
+			inline constexpr auto RP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RP>;
+			inline constexpr auto BDI =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BDI>;
+			inline constexpr auto BDO =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BDO>;
+			inline constexpr auto SPAN =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SPAN>;
+			inline constexpr auto BR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BR>;
+			inline constexpr auto WBR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_WBR>;
+			inline constexpr auto INS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_INS>;
+			inline constexpr auto DEL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DEL>;
+			inline constexpr auto IMAGE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IMAGE>;
+			inline constexpr auto IMG =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IMG>;
+			inline constexpr auto IFRAME =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IFRAME>;
+			inline constexpr auto EMBED =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_EMBED>;
+			inline constexpr auto OBJECT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OBJECT>;
+			inline constexpr auto PARAM =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PARAM>;
+			inline constexpr auto VIDEO =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_VIDEO>;
+			inline constexpr auto AUDIO =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_AUDIO>;
+			inline constexpr auto SOURCE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SOURCE>;
+			inline constexpr auto TRACK =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TRACK>;
+			inline constexpr auto CANVAS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CANVAS>;
+			inline constexpr auto MAP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MAP>;
+			inline constexpr auto AREA =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_AREA>;
+			inline constexpr auto MATH =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MATH>;
+			inline constexpr auto MI =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MI>;
+			inline constexpr auto MO =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MO>;
+			inline constexpr auto MN =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MN>;
+			inline constexpr auto MS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MS>;
+			inline constexpr auto MTEXT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MTEXT>;
+			inline constexpr auto MGLYPH =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MGLYPH>;
+			inline constexpr auto MALIGNMARK =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MALIGNMARK>;
+			inline constexpr auto ANNOTATION_XML =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ANNOTATION_XML>;
+			inline constexpr auto SVG =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SVG>;
+			inline constexpr auto FOREIGNOBJECT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FOREIGNOBJECT>;
+			inline constexpr auto DESC =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DESC>;
+			inline constexpr auto TABLE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TABLE>;
+			inline constexpr auto CAPTION =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CAPTION>;
+			inline constexpr auto COLGROUP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_COLGROUP>;
+			inline constexpr auto COL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_COL>;
+			inline constexpr auto TBODY =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TBODY>;
+			inline constexpr auto THEAD =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_THEAD>;
+			inline constexpr auto TFOOT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TFOOT>;
+			inline constexpr auto TR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TR>;
+			inline constexpr auto TD =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TD>;
+			inline constexpr auto TH =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TH>;
+			inline constexpr auto FORM =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FORM>;
+			inline constexpr auto FIELDSET =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIELDSET>;
+			inline constexpr auto LEGEND =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LEGEND>;
+			inline constexpr auto LABEL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LABEL>;
+			inline constexpr auto INPUT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_INPUT>;
+			inline constexpr auto BUTTON =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BUTTON>;
+			inline constexpr auto SELECT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SELECT>;
+			inline constexpr auto DATALIST =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DATALIST>;
+			inline constexpr auto OPTGROUP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OPTGROUP>;
+			inline constexpr auto OPTION =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OPTION>;
+			inline constexpr auto TEXTAREA =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TEXTAREA>;
+			inline constexpr auto KEYGEN =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_KEYGEN>;
+			inline constexpr auto OUTPUT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OUTPUT>;
+			inline constexpr auto PROGRESS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PROGRESS>;
+			inline constexpr auto METER =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_METER>;
+			inline constexpr auto DETAILS =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DETAILS>;
+			inline constexpr auto SUMMARY =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUMMARY>;
+			inline constexpr auto MENU =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MENU>;
+			inline constexpr auto MENUITEM =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MENUITEM>;
+			inline constexpr auto APPLET =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_APPLET>;
+			inline constexpr auto ACRONYM =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ACRONYM>;
+			inline constexpr auto BGSOUND =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BGSOUND>;
+			inline constexpr auto DIR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DIR>;
+			inline constexpr auto FRAME =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FRAME>;
+			inline constexpr auto FRAMESET =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FRAMESET>;
+			inline constexpr auto NOFRAMES =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOFRAMES>;
+			inline constexpr auto ISINDEX =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ISINDEX>;
+			inline constexpr auto LISTING =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LISTING>;
+			inline constexpr auto XMP =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_XMP>;
+			inline constexpr auto NEXTID =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NEXTID>;
+			inline constexpr auto NOEMBED =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOEMBED>;
+			inline constexpr auto PLAINTEXT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PLAINTEXT>;
+			inline constexpr auto RB =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RB>;
+			inline constexpr auto STRIKE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STRIKE>;
+			inline constexpr auto BASEFONT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BASEFONT>;
+			inline constexpr auto BIG =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BIG>;
+			inline constexpr auto BLINK =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BLINK>;
+			inline constexpr auto CENTER =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CENTER>;
+			inline constexpr auto FONT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FONT>;
+			inline constexpr auto MARQUEE =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MARQUEE>;
+			inline constexpr auto MULTICOL =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MULTICOL>;
+			inline constexpr auto NOBR =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOBR>;
+			inline constexpr auto SPACER =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SPACER>;
+			inline constexpr auto TT =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TT>;
+			inline constexpr auto RTC =
+			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RTC>;
+		} // namespace tags
+	}   // namespace match
 } // namespace daw::gumbo
