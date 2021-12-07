@@ -151,13 +151,12 @@ namespace daw::gumbo {
 
 } // namespace daw::gumbo
 namespace daw::gumbo::match_details {
-	struct match_attribute {
+	namespace match_attribute {
 		/// Match any node that has an attribute where all the predicates returns
 		/// true
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
-			return [=]( auto const &node ) {
+		constexpr auto where( Predicate &&pred, Predicates &&...preds ) noexcept {
+			return [=]( GumboNode const &node ) -> bool {
 				return details::find_attribute_if_impl(
 				         gumbo_node_iterator_t( &node ),
 				         [&]( GumboAttribute const &attr ) -> bool {
@@ -171,12 +170,12 @@ namespace daw::gumbo::match_details {
 		}
 
 		/// Match any node that does not have any attributes
-		static constexpr auto has_none = []( auto const &node ) {
+		constexpr auto has_none = []( auto const &node ) {
 			return get_attribute_count( node ) == 0;
 		};
 
 		/// Match any node that has attributes
-		static constexpr auto has = []( auto const &node ) {
+		constexpr auto has = []( auto const &node ) {
 			return get_attribute_count( node ) != 0;
 		};
 
@@ -185,7 +184,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto exists( Container &&c ) noexcept {
+		constexpr auto exists( Container &&c ) noexcept {
 			return [=]( auto const &node ) {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -200,21 +199,21 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node that has any of these attributes
 		template<typename... StringView>
-		static constexpr auto exists( daw::string_view name,
-		                              StringView &&...names ) noexcept {
+		constexpr auto exists( daw::string_view name,
+		                       StringView &&...names ) noexcept {
 			return [=]( auto const &node ) {
 				return attribute_exists( node, name ) or
 				       ( attribute_exists( node, names ) or ... );
 			};
 		}
 
-		struct name {
+		namespace name {
 			// Match any node that has a matching attribute name
 			template<typename Container,
 			         std::enable_if_t<daw::traits::is_container_like_v<
 			                            daw::remove_cvref_t<Container>>,
 			                          std::nullptr_t> = nullptr>
-			static constexpr auto is( Container &&c ) noexcept {
+			constexpr auto is( Container &&c ) noexcept {
 				return where( [=]( daw::string_view name, daw::string_view ) noexcept {
 					auto first = std::begin( c );
 					auto last = std::end( c );
@@ -228,21 +227,20 @@ namespace daw::gumbo::match_details {
 			}
 			// Match any node that has a matching attribute name
 			template<typename... StringView>
-			static constexpr auto is( daw::string_view attribute_name,
-			                          StringView &&...attribute_names ) noexcept {
+			constexpr auto is( daw::string_view attribute_name,
+			                   StringView &&...attribute_names ) noexcept {
 				return where( [=]( daw::string_view name, daw::string_view ) noexcept {
 					return ( name == attribute_name ) or
 					       ( ( name == attribute_names ) or ... );
 				} );
 			}
-		};
+		} // namespace name
 
-		struct value {
+		namespace value {
 			/// Match any node with named attribute who's value is either value or
 			/// prefixed by value and a hyphen `-`
-			static constexpr auto
-			contains_prefix( daw::string_view attribute_name,
-			                 daw::string_view value_prefix ) noexcept {
+			constexpr auto contains_prefix( daw::string_view attribute_name,
+			                                daw::string_view value_prefix ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  if( name != attribute_name ) {
@@ -264,8 +262,8 @@ namespace daw::gumbo::match_details {
 			         std::enable_if_t<daw::traits::is_container_like_v<
 			                            daw::remove_cvref_t<Container>>,
 			                          std::nullptr_t> = nullptr>
-			static constexpr auto contains( daw::string_view attribute_name,
-			                                Container &&value_substrs ) noexcept {
+			constexpr auto contains( daw::string_view attribute_name,
+			                         Container &&value_substrs ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  auto first = std::begin( value_substrs );
@@ -286,9 +284,9 @@ namespace daw::gumbo::match_details {
 			/// Match any node with named attribute who's value contains the
 			/// specified value
 			template<typename... StringView>
-			static constexpr auto contains( daw::string_view attribute_name,
-			                                daw::string_view value_substr,
-			                                StringView &&...value_substrs ) noexcept {
+			constexpr auto contains( daw::string_view attribute_name,
+			                         daw::string_view value_substr,
+			                         StringView &&...value_substrs ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  return name == attribute_name and
@@ -305,8 +303,8 @@ namespace daw::gumbo::match_details {
 			         std::enable_if_t<daw::traits::is_container_like_v<
 			                            daw::remove_cvref_t<Container>>,
 			                          std::nullptr_t> = nullptr>
-			static constexpr auto starts_with( daw::string_view attribute_name,
-			                                   Container &&value_prefixes ) noexcept {
+			constexpr auto starts_with( daw::string_view attribute_name,
+			                            Container &&value_prefixes ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  auto first = std::begin( value_prefixes );
@@ -326,10 +324,9 @@ namespace daw::gumbo::match_details {
 			/// Match any node with named attribute who's value starts with one of the
 			/// specified values
 			template<typename... StringView>
-			static constexpr auto
-			starts_with( daw::string_view attribute_name,
-			             daw::string_view value_prefix,
-			             StringView &&...value_prefixes ) noexcept {
+			constexpr auto starts_with( daw::string_view attribute_name,
+			                            daw::string_view value_prefix,
+			                            StringView &&...value_prefixes ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  return name == attribute_name and
@@ -344,8 +341,8 @@ namespace daw::gumbo::match_details {
 			         std::enable_if_t<daw::traits::is_container_like_v<
 			                            daw::remove_cvref_t<Container>>,
 			                          std::nullptr_t> = nullptr>
-			static constexpr auto ends_with( daw::string_view attribute_name,
-			                                 Container &&value_prefixes ) noexcept {
+			constexpr auto ends_with( daw::string_view attribute_name,
+			                          Container &&value_prefixes ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  auto first = std::begin( value_prefixes );
@@ -365,10 +362,9 @@ namespace daw::gumbo::match_details {
 			/// Match any node with named attribute who's value end with the
 			/// specified value
 			template<typename... StringView>
-			static constexpr auto
-			ends_with( daw::string_view attribute_name,
-			           daw::string_view value_prefix,
-			           StringView &&...value_prefixes ) noexcept {
+			constexpr auto ends_with( daw::string_view attribute_name,
+			                          daw::string_view value_prefix,
+			                          StringView &&...value_prefixes ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  return name == attribute_name and
@@ -383,8 +379,8 @@ namespace daw::gumbo::match_details {
 			         std::enable_if_t<daw::traits::is_container_like_v<
 			                            daw::remove_cvref_t<Container>>,
 			                          std::nullptr_t> = nullptr>
-			static constexpr auto is( daw::string_view attribute_name,
-			                          Container &&attribute_values ) noexcept {
+			constexpr auto is( daw::string_view attribute_name,
+			                   Container &&attribute_values ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  auto first = std::begin( attribute_values );
@@ -400,9 +396,9 @@ namespace daw::gumbo::match_details {
 			/// Match any node with named attribute who's value equals to one of the
 			/// specified values
 			template<typename... StringView>
-			static constexpr auto is( daw::string_view attribute_name,
-			                          daw::string_view attribute_value,
-			                          StringView &&...attribute_values ) noexcept {
+			constexpr auto is( daw::string_view attribute_name,
+			                   daw::string_view attribute_value,
+			                   StringView &&...attribute_values ) noexcept {
 				return where(
 				  [=]( daw::string_view name, daw::string_view value ) noexcept {
 					  return name == attribute_name and
@@ -412,8 +408,7 @@ namespace daw::gumbo::match_details {
 			}
 
 			/// Match any node with named attribute who's value is empty
-			static constexpr auto
-			is_empty( daw::string_view attribute_name ) noexcept {
+			constexpr auto is_empty( daw::string_view attribute_name ) noexcept {
 				return where( [attribute_name]( daw::string_view name,
 				                                daw::string_view value ) noexcept {
 					return name == attribute_name and value.empty( ) and value.data( );
@@ -421,8 +416,7 @@ namespace daw::gumbo::match_details {
 			}
 
 			/// Match any node with named attribute who's value is null
-			static constexpr auto
-			is_null( daw::string_view attribute_name ) noexcept {
+			constexpr auto is_null( daw::string_view attribute_name ) noexcept {
 				return where( [attribute_name]( daw::string_view name,
 				                                daw::string_view value ) noexcept {
 					return name == attribute_name and not value.data( );
@@ -430,21 +424,19 @@ namespace daw::gumbo::match_details {
 			}
 
 			/// Match any node with named attribute who's value is not empty
-			static constexpr auto
-			has_value( daw::string_view attribute_name ) noexcept {
+			constexpr auto has_value( daw::string_view attribute_name ) noexcept {
 				return where( [attribute_name]( daw::string_view name,
 				                                daw::string_view value ) noexcept {
 					return name == attribute_name and not value.empty( );
 				} );
 			}
-		};
-	};
+		} // namespace value
+	}   // namespace match_attribute
 
-	struct match_class {
+	namespace match_class {
 		/// Match any node with a class that returns true for all the predicates
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( Predicate &&pred, Predicates &&...preds ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
@@ -457,8 +449,8 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto is( daw::string_view attribute_name,
-		                          Container &&attribute_values ) noexcept {
+		constexpr auto is( daw::string_view attribute_name,
+		                   Container &&attribute_values ) noexcept {
 			return where(
 			  [=]( daw::string_view name, daw::string_view value ) noexcept {
 				  auto first = std::begin( attribute_values );
@@ -473,8 +465,8 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node with a class named that is one of the following
 		template<typename... StringView>
-		static constexpr auto is( daw::string_view class_name,
-		                          StringView &&...class_names ) noexcept {
+		constexpr auto is( daw::string_view class_name,
+		                   StringView &&...class_names ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
@@ -483,13 +475,12 @@ namespace daw::gumbo::match_details {
 				           ( ( attribute_value == class_names ) or ... ) );
 			  } );
 		}
-	};
+	} // namespace match_class
 
-	struct match_id {
+	namespace match_id {
 		/// Match any node with a id that returns true for the predicate
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( Predicate &&pred, Predicates &&...preds ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
@@ -500,8 +491,8 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node with a id that is any of the following names
 		template<typename... StringView>
-		static constexpr auto is( daw::string_view id_name,
-		                          StringView &&...id_names ) noexcept {
+		constexpr auto is( daw::string_view id_name,
+		                   StringView &&...id_names ) noexcept {
 			return match_attribute::where(
 			  [=]( daw::string_view attribute_name,
 			       daw::string_view attribute_value ) noexcept -> bool {
@@ -510,14 +501,13 @@ namespace daw::gumbo::match_details {
 				           ( ( attribute_value == id_names ) or ... ) );
 			  } );
 		}
-	};
+	} // namespace match_id
 
 	// For matching the content of tags like A
-	struct match_content_text {
+	namespace match_content_text {
 		/// Match any node with a id that returns true for the predicates
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( Predicate &&pred, Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
 				auto txt = node_content_text( node );
 				daw::string_view sv = txt;
@@ -526,7 +516,7 @@ namespace daw::gumbo::match_details {
 		}
 
 		template<typename Map, typename Predicate>
-		static constexpr auto map( Map &&map, Predicate &&pred ) noexcept {
+		constexpr auto map( Map &&map, Predicate &&pred ) noexcept {
 			return [=]( auto const &node ) -> bool {
 				auto txt = node_content_text( node );
 				daw::string_view sv = txt;
@@ -538,7 +528,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto contains( Container &&c ) noexcept {
+		constexpr auto contains( Container &&c ) noexcept {
 			return [=]( auto const &node ) noexcept {
 				auto text = node_content_text( node );
 				if( text.empty( ) ) {
@@ -555,8 +545,8 @@ namespace daw::gumbo::match_details {
 		}
 
 		template<typename... StringView>
-		static constexpr auto contains( daw::string_view search_text,
-		                                StringView &&...search_texts ) noexcept {
+		constexpr auto contains( daw::string_view search_text,
+		                         StringView &&...search_texts ) noexcept {
 			return [=]( auto const &node ) noexcept -> bool {
 				auto text = node_content_text( node );
 				return ( text.find( search_text ) != std::string::npos ) or
@@ -564,7 +554,7 @@ namespace daw::gumbo::match_details {
 			};
 		}
 
-		static constexpr auto is_empty = []( auto const &node ) noexcept -> bool {
+		inline constexpr auto is_empty = []( auto const &node ) noexcept -> bool {
 			return node_content_text( node ).empty( );
 		};
 
@@ -574,7 +564,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto starts_with( Container &&c ) noexcept {
+		constexpr auto starts_with( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -587,8 +577,8 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value starts with and of the
 		/// specified values
 		template<typename... StringView>
-		static constexpr auto starts_with( daw::string_view prefix_text,
-		                                   StringView &&...prefix_texts ) noexcept {
+		constexpr auto starts_with( daw::string_view prefix_text,
+		                            StringView &&...prefix_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
 				return text.starts_with( prefix_text ) or
 				       ( text.starts_with( prefix_texts ) or ... );
@@ -601,7 +591,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto ends_with( Container &&c ) noexcept {
+		constexpr auto ends_with( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -614,8 +604,8 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value ends with the specified
 		/// value
 		template<typename... StringView>
-		static constexpr auto ends_with( daw::string_view prefix_text,
-		                                 StringView &&...prefix_texts ) noexcept {
+		constexpr auto ends_with( daw::string_view prefix_text,
+		                          StringView &&...prefix_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
 				return text.starts_with( prefix_text ) or
 				       ( text.ends_with( prefix_texts ) or ... );
@@ -627,7 +617,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto is( Container &&c ) noexcept {
+		constexpr auto is( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -640,20 +630,20 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value is equal to on of the
 		/// specified values
 		template<typename... StringView>
-		static constexpr auto is( daw::string_view match_text,
-		                          StringView &&...match_texts ) noexcept {
+		constexpr auto is( daw::string_view match_text,
+		                   StringView &&...match_texts ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept -> bool {
 				return ( text == match_text ) or ( ( text == match_texts ) or ... );
 			} );
 		}
-	};
+	} // namespace match_content_text
 
-	struct match_inner_text {
+	namespace match_inner_text {
 		/// Match any node with inner_text that returns true for the predicate
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( daw::string_view html_doc,
-		                             Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( daw::string_view html_doc,
+		                      Predicate &&pred,
+		                      Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
 				daw::string_view text = node_inner_text( node, html_doc );
 				return pred( text ) and ( preds( text ) and ... );
@@ -661,7 +651,7 @@ namespace daw::gumbo::match_details {
 		}
 
 		/// Match any node with inner_text that is empty
-		static constexpr auto is_empty( daw::string_view html_doc ) noexcept {
+		constexpr auto is_empty( daw::string_view html_doc ) noexcept {
 			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
 				return text.empty( );
 			} );
@@ -672,8 +662,8 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto contains( daw::string_view html_doc,
-		                                Container &&c ) noexcept {
+		constexpr auto contains( daw::string_view html_doc,
+		                         Container &&c ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -685,9 +675,9 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node with inner_text that contains search_text
 		template<typename... StringView>
-		static constexpr auto contains( daw::string_view html_doc,
-		                                daw::string_view search_text,
-		                                StringView &&...search_texts ) noexcept {
+		constexpr auto contains( daw::string_view html_doc,
+		                         daw::string_view search_text,
+		                         StringView &&...search_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return ( text.find( search_text ) != daw::string_view::npos ) or
 				       ( ( text.find( search_texts ) != daw::string_view::npos ) or
@@ -701,8 +691,8 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto starts_with( daw::string_view html_doc,
-		                                   Container &&c ) noexcept {
+		constexpr auto starts_with( daw::string_view html_doc,
+		                            Container &&c ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -714,8 +704,8 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node with inner text who's value starts with the specified
 		/// values
-		static constexpr auto starts_with( daw::string_view html_doc,
-		                                   daw::string_view prefix_text ) noexcept {
+		constexpr auto starts_with( daw::string_view html_doc,
+		                            daw::string_view prefix_text ) noexcept {
 			return where( html_doc, [prefix_text]( daw::string_view text ) noexcept {
 				return text.starts_with( prefix_text );
 			} );
@@ -727,8 +717,8 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto ends_with( daw::string_view html_doc,
-		                                 Container &&c ) noexcept {
+		constexpr auto ends_with( daw::string_view html_doc,
+		                          Container &&c ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -741,9 +731,9 @@ namespace daw::gumbo::match_details {
 		/// Match any node with inner text who's value ends with the specified
 		/// values
 		template<typename... StringView>
-		static constexpr auto ends_with( daw::string_view html_doc,
-		                                 daw::string_view suffix_text,
-		                                 StringView &&...suffix_texts ) noexcept {
+		constexpr auto ends_with( daw::string_view html_doc,
+		                          daw::string_view suffix_text,
+		                          StringView &&...suffix_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return text.ends_with( suffix_text ) or
 				       ( text.ends_with( suffix_texts ) or ... );
@@ -756,8 +746,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto is( daw::string_view html_doc,
-		                          Container &&c ) noexcept {
+		constexpr auto is( daw::string_view html_doc, Container &&c ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -770,21 +759,21 @@ namespace daw::gumbo::match_details {
 		/// Match any node with inner text who's value is equal to the specified
 		/// values
 		template<typename... StringView>
-		static constexpr auto is( daw::string_view html_doc,
-		                          daw::string_view suffix_text,
-		                          StringView &&...suffix_texts ) noexcept {
+		constexpr auto is( daw::string_view html_doc,
+		                   daw::string_view suffix_text,
+		                   StringView &&...suffix_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return text == suffix_text or ( ( text == suffix_texts ) or ... );
 			} );
 		}
-	};
+	} // namespace match_inner_text
 
-	struct match_outer_text {
+	namespace match_outer_text {
 		/// Match any node with outer_text that returns true for the predicates
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( daw::string_view html_doc,
-		                             Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( daw::string_view html_doc,
+		                      Predicate &&pred,
+		                      Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) -> bool {
 				auto text = node_outer_text( node, html_doc );
 				return pred( text ) and ( preds( text ) and ... );
@@ -792,7 +781,7 @@ namespace daw::gumbo::match_details {
 		}
 
 		/// Match any node with outer_text that is empty
-		static constexpr auto is_empty( daw::string_view html_doc ) noexcept {
+		constexpr auto is_empty( daw::string_view html_doc ) noexcept {
 			return where( html_doc, []( daw::string_view text ) noexcept -> bool {
 				return text.empty( );
 			} );
@@ -803,7 +792,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto contains( Container &&c ) noexcept {
+		constexpr auto contains( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -815,9 +804,9 @@ namespace daw::gumbo::match_details {
 
 		/// Match any node with outer_text that contains match_text
 		template<typename... StringView>
-		static constexpr auto contains( daw::string_view html_doc,
-		                                daw::string_view match_text,
-		                                StringView &&...match_texts ) noexcept {
+		constexpr auto contains( daw::string_view html_doc,
+		                         daw::string_view match_text,
+		                         StringView &&...match_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return ( text.find( match_text ) != daw::string_view::npos ) or
 				       ( ( text.find( match_texts ) != daw::string_view::npos ) or
@@ -831,7 +820,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto starts_with( Container &&c ) noexcept {
+		constexpr auto starts_with( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -844,9 +833,9 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value starts with the specified
 		/// values
 		template<typename... StringView>
-		static constexpr auto starts_with( daw::string_view html_doc,
-		                                   daw::string_view match_text,
-		                                   StringView &&...match_texts ) noexcept {
+		constexpr auto starts_with( daw::string_view html_doc,
+		                            daw::string_view match_text,
+		                            StringView &&...match_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return text.starts_with( match_text ) or
 				       ( text.starts_with( match_texts ) or ... );
@@ -859,7 +848,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto ends_with( Container &&c ) noexcept {
+		constexpr auto ends_with( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -872,9 +861,9 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value ends with the specified
 		/// values
 		template<typename... StringView>
-		static constexpr auto ends_with( daw::string_view html_doc,
-		                                 daw::string_view match_text,
-		                                 StringView &&...match_texts ) noexcept {
+		constexpr auto ends_with( daw::string_view html_doc,
+		                          daw::string_view match_text,
+		                          StringView &&...match_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return text.ends_with( match_text ) or
 				       ( text.ends_with( match_texts ) or ... );
@@ -887,7 +876,7 @@ namespace daw::gumbo::match_details {
 		         std::enable_if_t<
 		           daw::traits::is_container_like_v<daw::remove_cvref_t<Container>>,
 		           std::nullptr_t> = nullptr>
-		static constexpr auto is( Container &&c ) noexcept {
+		constexpr auto is( Container &&c ) noexcept {
 			return where( [=]( daw::string_view text ) noexcept {
 				auto first = std::begin( c );
 				auto last = std::end( c );
@@ -900,21 +889,20 @@ namespace daw::gumbo::match_details {
 		/// Match any node with outer text who's value is equal to the specified
 		/// values
 		template<typename... StringView>
-		static constexpr auto is( daw::string_view html_doc,
-		                          daw::string_view match_text,
-		                          StringView &&...match_texts ) noexcept {
+		constexpr auto is( daw::string_view html_doc,
+		                   daw::string_view match_text,
+		                   StringView &&...match_texts ) noexcept {
 			return where( html_doc, [=]( daw::string_view text ) noexcept {
 				return text == match_text or ( ( text == match_texts ) or ... );
 			} );
 		}
-	};
+	} // namespace match_outer_text
 
-	struct match_tag {
+	namespace match_tag {
 		/// Match any node with where the tag type where all the Predicates return
 		/// true
 		template<typename Predicate, typename... Predicates>
-		static constexpr auto where( Predicate &&pred,
-		                             Predicates &&...preds ) noexcept {
+		constexpr auto where( Predicate &&pred, Predicates &&...preds ) noexcept {
 			return [=]( auto const &node ) noexcept -> bool {
 				if( node.type != GUMBO_NODE_ELEMENT ) {
 					return false;
@@ -927,378 +915,243 @@ namespace daw::gumbo::match_details {
 		/// Match any node with where the tag type where the tag type matches on
 		/// of the specified types
 		template<GumboTag... tags>
-		static constexpr auto types = []( auto const &node ) {
+		inline constexpr auto types = []( GumboNode const &node ) -> bool {
 			if( node.type != GUMBO_NODE_ELEMENT ) {
 				return false;
 			}
-			auto tag_value = node.v.element.tag;
+			GumboTag const tag_value = node.v.element.tag;
 			return ( ( tag_value == tags ) | ... );
 		};
-	};
 
-	template<
-	  typename MatchL,
-	  typename MatchR,
-	  std::enable_if_t<
-	    std::conjunction_v<
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
-	    std::nullptr_t> = nullptr>
-	constexpr auto operator||( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_any{ lhs }.append( match_any{ rhs } );
-	};
-
-	template<
-	  typename MatchL,
-	  typename MatchR,
-	  std::enable_if_t<
-	    std::conjunction_v<
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
-	    std::nullptr_t> = nullptr>
-	constexpr auto operator&&( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_all{ lhs }.append( match_all{ rhs } );
-	};
-
-	template<
-	  typename MatchL,
-	  typename MatchR,
-	  std::enable_if_t<
-	    std::conjunction_v<
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
-	      std::
-	        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
-	    std::nullptr_t> = nullptr>
-	constexpr auto operator^( MatchL const &lhs, MatchR const &rhs ) noexcept {
-		return match_one{ lhs }.append( match_one{ rhs } );
-	};
-
-	template<typename Matcher,
-	         std::enable_if_t<std::is_invocable_r_v<bool,
-	                                                daw::remove_cvref_t<Matcher>,
-	                                                GumboNode const &>,
-	                          std::nullptr_t> = nullptr>
-	constexpr auto operator!( Matcher &&matcher ) noexcept {
-		return match_not{ DAW_FWD2( Matcher, matcher ) };
-	};
+		inline constexpr auto HTML = types<GumboTag::GUMBO_TAG_HTML>;
+		inline constexpr auto HEAD = types<GumboTag::GUMBO_TAG_HEAD>;
+		inline constexpr auto TITLE = types<GumboTag::GUMBO_TAG_TITLE>;
+		inline constexpr auto BASE = types<GumboTag::GUMBO_TAG_BASE>;
+		inline constexpr auto LINK = types<GumboTag::GUMBO_TAG_LINK>;
+		inline constexpr auto META = types<GumboTag::GUMBO_TAG_META>;
+		inline constexpr auto STYLE = types<GumboTag::GUMBO_TAG_STYLE>;
+		inline constexpr auto SCRIPT = types<GumboTag::GUMBO_TAG_SCRIPT>;
+		inline constexpr auto NOSCRIPT = types<GumboTag::GUMBO_TAG_NOSCRIPT>;
+		inline constexpr auto TEMPLATE = types<GumboTag::GUMBO_TAG_TEMPLATE>;
+		inline constexpr auto BODY = types<GumboTag::GUMBO_TAG_BODY>;
+		inline constexpr auto ARTICLE = types<GumboTag::GUMBO_TAG_ARTICLE>;
+		inline constexpr auto SECTION = types<GumboTag::GUMBO_TAG_SECTION>;
+		inline constexpr auto NAV = types<GumboTag::GUMBO_TAG_NAV>;
+		inline constexpr auto ASIDE = types<GumboTag::GUMBO_TAG_ASIDE>;
+		inline constexpr auto H1 = types<GumboTag::GUMBO_TAG_H1>;
+		inline constexpr auto H2 = types<GumboTag::GUMBO_TAG_H2>;
+		inline constexpr auto H3 = types<GumboTag::GUMBO_TAG_H3>;
+		inline constexpr auto H4 = types<GumboTag::GUMBO_TAG_H4>;
+		inline constexpr auto H5 = types<GumboTag::GUMBO_TAG_H5>;
+		inline constexpr auto H6 = types<GumboTag::GUMBO_TAG_H6>;
+		inline constexpr auto HGROUP = types<GumboTag::GUMBO_TAG_HGROUP>;
+		inline constexpr auto HEADER = types<GumboTag::GUMBO_TAG_HEADER>;
+		inline constexpr auto FOOTER = types<GumboTag::GUMBO_TAG_FOOTER>;
+		inline constexpr auto ADDRESS = types<GumboTag::GUMBO_TAG_ADDRESS>;
+		inline constexpr auto P = types<GumboTag::GUMBO_TAG_P>;
+		inline constexpr auto HR = types<GumboTag::GUMBO_TAG_HR>;
+		inline constexpr auto PRE = types<GumboTag::GUMBO_TAG_PRE>;
+		inline constexpr auto BLOCKQUOTE = types<GumboTag::GUMBO_TAG_BLOCKQUOTE>;
+		inline constexpr auto OL = types<GumboTag::GUMBO_TAG_OL>;
+		inline constexpr auto UL = types<GumboTag::GUMBO_TAG_UL>;
+		inline constexpr auto LI = types<GumboTag::GUMBO_TAG_LI>;
+		inline constexpr auto DL = types<GumboTag::GUMBO_TAG_DL>;
+		inline constexpr auto DT = types<GumboTag::GUMBO_TAG_DT>;
+		inline constexpr auto DD = types<GumboTag::GUMBO_TAG_DD>;
+		inline constexpr auto FIGURE = types<GumboTag::GUMBO_TAG_FIGURE>;
+		inline constexpr auto FIGCAPTION = types<GumboTag::GUMBO_TAG_FIGCAPTION>;
+		inline constexpr auto MAIN = types<GumboTag::GUMBO_TAG_MAIN>;
+		inline constexpr auto DIV = types<GumboTag::GUMBO_TAG_DIV>;
+		inline constexpr auto A = types<GumboTag::GUMBO_TAG_A>;
+		inline constexpr auto EM = types<GumboTag::GUMBO_TAG_EM>;
+		inline constexpr auto STRONG = types<GumboTag::GUMBO_TAG_STRONG>;
+		inline constexpr auto SMALL = types<GumboTag::GUMBO_TAG_SMALL>;
+		inline constexpr auto S = types<GumboTag::GUMBO_TAG_S>;
+		inline constexpr auto CITE = types<GumboTag::GUMBO_TAG_CITE>;
+		inline constexpr auto Q = types<GumboTag::GUMBO_TAG_Q>;
+		inline constexpr auto DFN = types<GumboTag::GUMBO_TAG_DFN>;
+		inline constexpr auto ABBR = types<GumboTag::GUMBO_TAG_ABBR>;
+		inline constexpr auto DATA = types<GumboTag::GUMBO_TAG_DATA>;
+		inline constexpr auto TIME = types<GumboTag::GUMBO_TAG_TIME>;
+		inline constexpr auto CODE = types<GumboTag::GUMBO_TAG_CODE>;
+		inline constexpr auto VAR = types<GumboTag::GUMBO_TAG_VAR>;
+		inline constexpr auto SAMP = types<GumboTag::GUMBO_TAG_SAMP>;
+		inline constexpr auto KBD = types<GumboTag::GUMBO_TAG_KBD>;
+		inline constexpr auto SUB = types<GumboTag::GUMBO_TAG_SUB>;
+		inline constexpr auto SUP = types<GumboTag::GUMBO_TAG_SUP>;
+		inline constexpr auto I = types<GumboTag::GUMBO_TAG_I>;
+		inline constexpr auto B = types<GumboTag::GUMBO_TAG_B>;
+		inline constexpr auto U = types<GumboTag::GUMBO_TAG_U>;
+		inline constexpr auto MARK = types<GumboTag::GUMBO_TAG_MARK>;
+		inline constexpr auto RUBY = types<GumboTag::GUMBO_TAG_RUBY>;
+		inline constexpr auto RT = types<GumboTag::GUMBO_TAG_RT>;
+		inline constexpr auto RP = types<GumboTag::GUMBO_TAG_RP>;
+		inline constexpr auto BDI = types<GumboTag::GUMBO_TAG_BDI>;
+		inline constexpr auto BDO = types<GumboTag::GUMBO_TAG_BDO>;
+		inline constexpr auto SPAN = types<GumboTag::GUMBO_TAG_SPAN>;
+		inline constexpr auto BR = types<GumboTag::GUMBO_TAG_BR>;
+		inline constexpr auto WBR = types<GumboTag::GUMBO_TAG_WBR>;
+		inline constexpr auto INS = types<GumboTag::GUMBO_TAG_INS>;
+		inline constexpr auto DEL = types<GumboTag::GUMBO_TAG_DEL>;
+		inline constexpr auto IMAGE = types<GumboTag::GUMBO_TAG_IMAGE>;
+		inline constexpr auto IMG = types<GumboTag::GUMBO_TAG_IMG>;
+		inline constexpr auto IFRAME = types<GumboTag::GUMBO_TAG_IFRAME>;
+		inline constexpr auto EMBED = types<GumboTag::GUMBO_TAG_EMBED>;
+		inline constexpr auto OBJECT = types<GumboTag::GUMBO_TAG_OBJECT>;
+		inline constexpr auto PARAM = types<GumboTag::GUMBO_TAG_PARAM>;
+		inline constexpr auto VIDEO = types<GumboTag::GUMBO_TAG_VIDEO>;
+		inline constexpr auto AUDIO = types<GumboTag::GUMBO_TAG_AUDIO>;
+		inline constexpr auto SOURCE = types<GumboTag::GUMBO_TAG_SOURCE>;
+		inline constexpr auto TRACK = types<GumboTag::GUMBO_TAG_TRACK>;
+		inline constexpr auto CANVAS = types<GumboTag::GUMBO_TAG_CANVAS>;
+		inline constexpr auto MAP = types<GumboTag::GUMBO_TAG_MAP>;
+		inline constexpr auto AREA = types<GumboTag::GUMBO_TAG_AREA>;
+		inline constexpr auto MATH = types<GumboTag::GUMBO_TAG_MATH>;
+		inline constexpr auto MI = types<GumboTag::GUMBO_TAG_MI>;
+		inline constexpr auto MO = types<GumboTag::GUMBO_TAG_MO>;
+		inline constexpr auto MN = types<GumboTag::GUMBO_TAG_MN>;
+		inline constexpr auto MS = types<GumboTag::GUMBO_TAG_MS>;
+		inline constexpr auto MTEXT = types<GumboTag::GUMBO_TAG_MTEXT>;
+		inline constexpr auto MGLYPH = types<GumboTag::GUMBO_TAG_MGLYPH>;
+		inline constexpr auto MALIGNMARK = types<GumboTag::GUMBO_TAG_MALIGNMARK>;
+		inline constexpr auto ANNOTATION_XML =
+		  types<GumboTag::GUMBO_TAG_ANNOTATION_XML>;
+		inline constexpr auto SVG = types<GumboTag::GUMBO_TAG_SVG>;
+		inline constexpr auto FOREIGNOBJECT =
+		  types<GumboTag::GUMBO_TAG_FOREIGNOBJECT>;
+		inline constexpr auto DESC = types<GumboTag::GUMBO_TAG_DESC>;
+		inline constexpr auto TABLE = types<GumboTag::GUMBO_TAG_TABLE>;
+		inline constexpr auto CAPTION = types<GumboTag::GUMBO_TAG_CAPTION>;
+		inline constexpr auto COLGROUP = types<GumboTag::GUMBO_TAG_COLGROUP>;
+		inline constexpr auto COL = types<GumboTag::GUMBO_TAG_COL>;
+		inline constexpr auto TBODY = types<GumboTag::GUMBO_TAG_TBODY>;
+		inline constexpr auto THEAD = types<GumboTag::GUMBO_TAG_THEAD>;
+		inline constexpr auto TFOOT = types<GumboTag::GUMBO_TAG_TFOOT>;
+		inline constexpr auto TR = types<GumboTag::GUMBO_TAG_TR>;
+		inline constexpr auto TD = types<GumboTag::GUMBO_TAG_TD>;
+		inline constexpr auto TH = types<GumboTag::GUMBO_TAG_TH>;
+		inline constexpr auto FORM = types<GumboTag::GUMBO_TAG_FORM>;
+		inline constexpr auto FIELDSET = types<GumboTag::GUMBO_TAG_FIELDSET>;
+		inline constexpr auto LEGEND = types<GumboTag::GUMBO_TAG_LEGEND>;
+		inline constexpr auto LABEL = types<GumboTag::GUMBO_TAG_LABEL>;
+		inline constexpr auto INPUT = types<GumboTag::GUMBO_TAG_INPUT>;
+		inline constexpr auto BUTTON = types<GumboTag::GUMBO_TAG_BUTTON>;
+		inline constexpr auto SELECT = types<GumboTag::GUMBO_TAG_SELECT>;
+		inline constexpr auto DATALIST = types<GumboTag::GUMBO_TAG_DATALIST>;
+		inline constexpr auto OPTGROUP = types<GumboTag::GUMBO_TAG_OPTGROUP>;
+		inline constexpr auto OPTION = types<GumboTag::GUMBO_TAG_OPTION>;
+		inline constexpr auto TEXTAREA = types<GumboTag::GUMBO_TAG_TEXTAREA>;
+		inline constexpr auto KEYGEN = types<GumboTag::GUMBO_TAG_KEYGEN>;
+		inline constexpr auto OUTPUT = types<GumboTag::GUMBO_TAG_OUTPUT>;
+		inline constexpr auto PROGRESS = types<GumboTag::GUMBO_TAG_PROGRESS>;
+		inline constexpr auto METER = types<GumboTag::GUMBO_TAG_METER>;
+		inline constexpr auto DETAILS = types<GumboTag::GUMBO_TAG_DETAILS>;
+		inline constexpr auto SUMMARY = types<GumboTag::GUMBO_TAG_SUMMARY>;
+		inline constexpr auto MENU = types<GumboTag::GUMBO_TAG_MENU>;
+		inline constexpr auto MENUITEM = types<GumboTag::GUMBO_TAG_MENUITEM>;
+		inline constexpr auto APPLET = types<GumboTag::GUMBO_TAG_APPLET>;
+		inline constexpr auto ACRONYM = types<GumboTag::GUMBO_TAG_ACRONYM>;
+		inline constexpr auto BGSOUND = types<GumboTag::GUMBO_TAG_BGSOUND>;
+		inline constexpr auto DIR = types<GumboTag::GUMBO_TAG_DIR>;
+		inline constexpr auto FRAME = types<GumboTag::GUMBO_TAG_FRAME>;
+		inline constexpr auto FRAMESET = types<GumboTag::GUMBO_TAG_FRAMESET>;
+		inline constexpr auto NOFRAMES = types<GumboTag::GUMBO_TAG_NOFRAMES>;
+		inline constexpr auto ISINDEX = types<GumboTag::GUMBO_TAG_ISINDEX>;
+		inline constexpr auto LISTING = types<GumboTag::GUMBO_TAG_LISTING>;
+		inline constexpr auto XMP = types<GumboTag::GUMBO_TAG_XMP>;
+		inline constexpr auto NEXTID = types<GumboTag::GUMBO_TAG_NEXTID>;
+		inline constexpr auto NOEMBED = types<GumboTag::GUMBO_TAG_NOEMBED>;
+		inline constexpr auto PLAINTEXT = types<GumboTag::GUMBO_TAG_PLAINTEXT>;
+		inline constexpr auto RB = types<GumboTag::GUMBO_TAG_RB>;
+		inline constexpr auto STRIKE = types<GumboTag::GUMBO_TAG_STRIKE>;
+		inline constexpr auto BASEFONT = types<GumboTag::GUMBO_TAG_BASEFONT>;
+		inline constexpr auto BIG = types<GumboTag::GUMBO_TAG_BIG>;
+		inline constexpr auto BLINK = types<GumboTag::GUMBO_TAG_BLINK>;
+		inline constexpr auto CENTER = types<GumboTag::GUMBO_TAG_CENTER>;
+		inline constexpr auto FONT = types<GumboTag::GUMBO_TAG_FONT>;
+		inline constexpr auto MARQUEE = types<GumboTag::GUMBO_TAG_MARQUEE>;
+		inline constexpr auto MULTICOL = types<GumboTag::GUMBO_TAG_MULTICOL>;
+		inline constexpr auto NOBR = types<GumboTag::GUMBO_TAG_NOBR>;
+		inline constexpr auto SPACER = types<GumboTag::GUMBO_TAG_SPACER>;
+		inline constexpr auto TT = types<GumboTag::GUMBO_TAG_TT>;
+		inline constexpr auto RTC = types<GumboTag::GUMBO_TAG_RTC>;
+	} // namespace match_tag
 } // namespace daw::gumbo::match_details
 
-namespace daw::gumbo {
-	namespace match {
-		using attribute = match_details::match_attribute;
-		using class_type = match_details::match_class;
-		using id = match_details::match_id;
-		using inner_text = match_details::match_inner_text;
-		using outer_text = match_details::match_outer_text;
-		using content_text = match_details::match_content_text;
-		using tag = match_details::match_tag;
+template<
+  typename MatchL,
+  typename MatchR,
+  std::enable_if_t<
+    std::conjunction_v<
+      std::is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
+      std::
+        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
+    std::nullptr_t> = nullptr>
+constexpr auto operator||( MatchL const &lhs, MatchR const &rhs ) noexcept {
+	return daw::gumbo::match_any{ lhs }.append( daw::gumbo::match_any{ rhs } );
+};
 
-		namespace tags {
-			inline constexpr auto HTML =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HTML>;
-			inline constexpr auto HEAD =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HEAD>;
-			inline constexpr auto TITLE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TITLE>;
-			inline constexpr auto BASE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BASE>;
-			inline constexpr auto LINK =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LINK>;
-			inline constexpr auto META =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_META>;
-			inline constexpr auto STYLE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STYLE>;
-			inline constexpr auto SCRIPT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SCRIPT>;
-			inline constexpr auto NOSCRIPT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOSCRIPT>;
-			inline constexpr auto TEMPLATE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TEMPLATE>;
-			inline constexpr auto BODY =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BODY>;
-			inline constexpr auto ARTICLE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ARTICLE>;
-			inline constexpr auto SECTION =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SECTION>;
-			inline constexpr auto NAV =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NAV>;
-			inline constexpr auto ASIDE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ASIDE>;
-			inline constexpr auto H1 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H1>;
-			inline constexpr auto H2 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H2>;
-			inline constexpr auto H3 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H3>;
-			inline constexpr auto H4 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H4>;
-			inline constexpr auto H5 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H5>;
-			inline constexpr auto H6 =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_H6>;
-			inline constexpr auto HGROUP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HGROUP>;
-			inline constexpr auto HEADER =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HEADER>;
-			inline constexpr auto FOOTER =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FOOTER>;
-			inline constexpr auto ADDRESS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ADDRESS>;
-			inline constexpr auto P =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_P>;
-			inline constexpr auto HR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_HR>;
-			inline constexpr auto PRE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PRE>;
-			inline constexpr auto BLOCKQUOTE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BLOCKQUOTE>;
-			inline constexpr auto OL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OL>;
-			inline constexpr auto UL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_UL>;
-			inline constexpr auto LI =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LI>;
-			inline constexpr auto DL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DL>;
-			inline constexpr auto DT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DT>;
-			inline constexpr auto DD =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DD>;
-			inline constexpr auto FIGURE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIGURE>;
-			inline constexpr auto FIGCAPTION =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIGCAPTION>;
-			inline constexpr auto MAIN =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MAIN>;
-			inline constexpr auto DIV =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DIV>;
-			inline constexpr auto A =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_A>;
-			inline constexpr auto EM =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_EM>;
-			inline constexpr auto STRONG =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STRONG>;
-			inline constexpr auto SMALL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SMALL>;
-			inline constexpr auto S =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_S>;
-			inline constexpr auto CITE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CITE>;
-			inline constexpr auto Q =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_Q>;
-			inline constexpr auto DFN =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DFN>;
-			inline constexpr auto ABBR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ABBR>;
-			inline constexpr auto DATA =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DATA>;
-			inline constexpr auto TIME =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TIME>;
-			inline constexpr auto CODE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CODE>;
-			inline constexpr auto VAR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_VAR>;
-			inline constexpr auto SAMP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SAMP>;
-			inline constexpr auto KBD =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_KBD>;
-			inline constexpr auto SUB =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUB>;
-			inline constexpr auto SUP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUP>;
-			inline constexpr auto I =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_I>;
-			inline constexpr auto B =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_B>;
-			inline constexpr auto U =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_U>;
-			inline constexpr auto MARK =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MARK>;
-			inline constexpr auto RUBY =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RUBY>;
-			inline constexpr auto RT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RT>;
-			inline constexpr auto RP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RP>;
-			inline constexpr auto BDI =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BDI>;
-			inline constexpr auto BDO =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BDO>;
-			inline constexpr auto SPAN =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SPAN>;
-			inline constexpr auto BR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BR>;
-			inline constexpr auto WBR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_WBR>;
-			inline constexpr auto INS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_INS>;
-			inline constexpr auto DEL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DEL>;
-			inline constexpr auto IMAGE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IMAGE>;
-			inline constexpr auto IMG =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IMG>;
-			inline constexpr auto IFRAME =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_IFRAME>;
-			inline constexpr auto EMBED =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_EMBED>;
-			inline constexpr auto OBJECT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OBJECT>;
-			inline constexpr auto PARAM =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PARAM>;
-			inline constexpr auto VIDEO =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_VIDEO>;
-			inline constexpr auto AUDIO =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_AUDIO>;
-			inline constexpr auto SOURCE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SOURCE>;
-			inline constexpr auto TRACK =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TRACK>;
-			inline constexpr auto CANVAS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CANVAS>;
-			inline constexpr auto MAP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MAP>;
-			inline constexpr auto AREA =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_AREA>;
-			inline constexpr auto MATH =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MATH>;
-			inline constexpr auto MI =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MI>;
-			inline constexpr auto MO =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MO>;
-			inline constexpr auto MN =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MN>;
-			inline constexpr auto MS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MS>;
-			inline constexpr auto MTEXT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MTEXT>;
-			inline constexpr auto MGLYPH =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MGLYPH>;
-			inline constexpr auto MALIGNMARK =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MALIGNMARK>;
-			inline constexpr auto ANNOTATION_XML =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ANNOTATION_XML>;
-			inline constexpr auto SVG =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SVG>;
-			inline constexpr auto FOREIGNOBJECT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FOREIGNOBJECT>;
-			inline constexpr auto DESC =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DESC>;
-			inline constexpr auto TABLE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TABLE>;
-			inline constexpr auto CAPTION =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CAPTION>;
-			inline constexpr auto COLGROUP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_COLGROUP>;
-			inline constexpr auto COL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_COL>;
-			inline constexpr auto TBODY =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TBODY>;
-			inline constexpr auto THEAD =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_THEAD>;
-			inline constexpr auto TFOOT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TFOOT>;
-			inline constexpr auto TR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TR>;
-			inline constexpr auto TD =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TD>;
-			inline constexpr auto TH =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TH>;
-			inline constexpr auto FORM =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FORM>;
-			inline constexpr auto FIELDSET =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FIELDSET>;
-			inline constexpr auto LEGEND =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LEGEND>;
-			inline constexpr auto LABEL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LABEL>;
-			inline constexpr auto INPUT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_INPUT>;
-			inline constexpr auto BUTTON =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BUTTON>;
-			inline constexpr auto SELECT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SELECT>;
-			inline constexpr auto DATALIST =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DATALIST>;
-			inline constexpr auto OPTGROUP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OPTGROUP>;
-			inline constexpr auto OPTION =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OPTION>;
-			inline constexpr auto TEXTAREA =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TEXTAREA>;
-			inline constexpr auto KEYGEN =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_KEYGEN>;
-			inline constexpr auto OUTPUT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_OUTPUT>;
-			inline constexpr auto PROGRESS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PROGRESS>;
-			inline constexpr auto METER =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_METER>;
-			inline constexpr auto DETAILS =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DETAILS>;
-			inline constexpr auto SUMMARY =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SUMMARY>;
-			inline constexpr auto MENU =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MENU>;
-			inline constexpr auto MENUITEM =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MENUITEM>;
-			inline constexpr auto APPLET =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_APPLET>;
-			inline constexpr auto ACRONYM =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ACRONYM>;
-			inline constexpr auto BGSOUND =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BGSOUND>;
-			inline constexpr auto DIR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_DIR>;
-			inline constexpr auto FRAME =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FRAME>;
-			inline constexpr auto FRAMESET =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FRAMESET>;
-			inline constexpr auto NOFRAMES =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOFRAMES>;
-			inline constexpr auto ISINDEX =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_ISINDEX>;
-			inline constexpr auto LISTING =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_LISTING>;
-			inline constexpr auto XMP =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_XMP>;
-			inline constexpr auto NEXTID =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NEXTID>;
-			inline constexpr auto NOEMBED =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOEMBED>;
-			inline constexpr auto PLAINTEXT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_PLAINTEXT>;
-			inline constexpr auto RB =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RB>;
-			inline constexpr auto STRIKE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_STRIKE>;
-			inline constexpr auto BASEFONT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BASEFONT>;
-			inline constexpr auto BIG =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BIG>;
-			inline constexpr auto BLINK =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_BLINK>;
-			inline constexpr auto CENTER =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_CENTER>;
-			inline constexpr auto FONT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_FONT>;
-			inline constexpr auto MARQUEE =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MARQUEE>;
-			inline constexpr auto MULTICOL =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_MULTICOL>;
-			inline constexpr auto NOBR =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_NOBR>;
-			inline constexpr auto SPACER =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_SPACER>;
-			inline constexpr auto TT =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_TT>;
-			inline constexpr auto RTC =
-			  daw::gumbo::match::tag::types<GumboTag::GUMBO_TAG_RTC>;
-		} // namespace tags
-	}   // namespace match
-} // namespace daw::gumbo
+template<
+  typename MatchL,
+  typename MatchR,
+  std::enable_if_t<
+    std::conjunction_v<
+      std::is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
+      std::
+        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
+    std::nullptr_t> = nullptr>
+constexpr auto operator&&( MatchL const &lhs, MatchR const &rhs ) noexcept {
+	return daw::gumbo::match_all{ lhs }.append( daw::gumbo::match_all{ rhs } );
+};
+
+template<
+  typename MatchL,
+  typename MatchR,
+  std::enable_if_t<
+    std::conjunction_v<
+      std::is_invocable_r<bool, daw::remove_cvref_t<MatchL>, GumboNode const &>,
+      std::
+        is_invocable_r<bool, daw::remove_cvref_t<MatchR>, GumboNode const &>>,
+    std::nullptr_t> = nullptr>
+constexpr auto operator^( MatchL const &lhs, MatchR const &rhs ) noexcept {
+	return daw::gumbo::match_one{ lhs }.append( daw::gumbo::match_one{ rhs } );
+};
+
+template<typename Matcher,
+         std::enable_if_t<std::is_invocable_r_v<bool,
+                                                daw::remove_cvref_t<Matcher>,
+                                                GumboNode const &>,
+                          std::nullptr_t> = nullptr>
+constexpr auto operator!( Matcher &&matcher ) noexcept {
+	return daw::gumbo::match_not{ DAW_FWD2( Matcher, matcher ) };
+};
+
+namespace daw::gumbo::match {
+	namespace attribute {
+		using namespace match_details::match_attribute;
+	}
+
+	namespace class_type {
+		using namespace match_details::match_class;
+	}
+
+	namespace id {
+		using namespace match_details::match_id;
+	}
+
+	namespace inner_text {
+		using namespace match_details::match_inner_text;
+	}
+
+	namespace outer_text {
+		using namespace match_details::match_outer_text;
+	}
+
+	namespace content_text {
+		using namespace match_details::match_content_text;
+	}
+
+	namespace tag {
+		using namespace match_details::match_tag;
+	}
+} // namespace daw::gumbo::match
