@@ -12,11 +12,11 @@
 #include "gumbo_util.h"
 
 #include <daw/daw_not_null.h>
+#include <daw/daw_string_view.h>
 
 #include <cstddef>
 #include <gumbo.h>
 #include <iterator>
-#include <string_view>
 
 namespace daw::gumbo {
 	struct gumbo_node_iterator_t {
@@ -132,9 +132,9 @@ namespace daw::gumbo {
 
 	public:
 		explicit gumbo_range( GumboHandle &&handle );
-		explicit gumbo_range( std::string_view html_document,
+		explicit gumbo_range( daw::string_view html_document,
 		                      GumboOptions options );
-		explicit gumbo_range( std::string_view html_document );
+		explicit gumbo_range( daw::string_view html_document );
 
 		[[nodiscard]] inline gumbo_node_iterator_t begin( ) const {
 			return m_first;
