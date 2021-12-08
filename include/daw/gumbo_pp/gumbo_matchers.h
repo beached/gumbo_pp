@@ -538,7 +538,8 @@ namespace daw::gumbo::match_details {
 				auto last = std::end( c );
 				auto const fpos =
 				  std::find_if( first, last, [&]( daw::string_view cur_text ) {
-					  return text.find( cur_text ) != std::string::npos;
+					  return text.find( static_cast<std::string_view>( cur_text ) ) !=
+					         std::string::npos;
 				  } );
 				return fpos != last;
 			};
