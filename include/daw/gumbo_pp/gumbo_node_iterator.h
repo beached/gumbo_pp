@@ -35,20 +35,20 @@ namespace daw::gumbo {
 		pointer m_node = nullptr;
 
 	public:
-		constexpr gumbo_node_iterator_t( ) noexcept = default;
+		explicit constexpr gumbo_node_iterator_t( ) noexcept = default;
 
-		constexpr gumbo_node_iterator_t( GumboNode const *node ) noexcept
+		explicit constexpr gumbo_node_iterator_t( GumboNode const *node ) noexcept
 		  : m_node( node ) {}
 
-		constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
+		explicit constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
 		  : m_node( &node ) {}
 
-		constexpr gumbo_node_iterator_t begin( ) const {
+		[[nodiscard]] constexpr gumbo_node_iterator_t begin( ) const {
 			return *this;
 		}
 
-		constexpr gumbo_node_iterator_t end( ) const {
-			return { };
+		[[nodiscard]] constexpr gumbo_node_iterator_t end( ) const {
+			return gumbo_node_iterator_t{ };
 		}
 
 		[[nodiscard]] constexpr reference operator*( ) const noexcept {
@@ -158,6 +158,23 @@ namespace daw::gumbo {
 
 		[[nodiscard]] inline GumboVector errors( ) {
 			return m_handle->errors;
+		}
+	};
+
+
+	class gumbo_child_range {
+		gumbo_node_iterator_t m_first{ };
+		gumbo_node_iterator_t m_last{ };
+
+	public:
+		explicit gumbo_child_range( GumboNode const & parent_node );
+
+		[[nodiscard]] inline gumbo_node_iterator_t begin( ) const {
+			return m_first;
+		}
+
+		[[nodiscard]] inline gumbo_node_iterator_t end( ) const {
+			return m_last;
 		}
 	};
 } // namespace daw::gumbo

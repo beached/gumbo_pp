@@ -16,6 +16,7 @@
 namespace daw::gumbo::details {
 	void gumbo_pp_library( ) {}
 } // namespace daw::gumbo::details
+// namespace daw::gumbo::details
 
 namespace daw::gumbo {
 	gumbo_range::gumbo_range( GumboHandle &&handle )
@@ -30,4 +31,19 @@ namespace daw::gumbo {
 
 	gumbo_range::gumbo_range( daw::string_view html_document )
 	  : gumbo_range( html_document, kGumboDefaultOptions ) {}
+
+	namespace {
+		[[nodiscard]] gumbo_node_iterator_t
+		get_first_child( GumboNode const &parent_node ) {
+			auto const child_count = get_children_count( parent_node );
+			if( child_count == 0 ) {
+				return gumbo_node_iterator_t( parent_node );
+			}
+			return gumbo_node_iterator_t( get_child_node_at( parent_node, 0 ) );
+		}
+	} // namespace
+
+	gumbo_child_range::gumbo_child_range( GumboNode const &parent_node )
+	  : m_first( get_first_child( parent_node ) )
+	  , m_last( parent_node ) {}
 } // namespace daw::gumbo
