@@ -41,9 +41,19 @@ namespace daw::gumbo {
 			}
 			return gumbo_node_iterator_t( get_child_node_at( parent_node, 0 ) );
 		}
+
+		[[nodiscard]] gumbo_node_iterator_t
+		get_last_child( GumboNode const &parent_node ) {
+			auto const child_count = get_children_count( parent_node );
+			if( child_count == 0 ) {
+				return gumbo_node_iterator_t( parent_node );
+			}
+			return std::next( gumbo_node_iterator_t(
+			  get_child_node_at( parent_node, child_count - 1 ) ) );
+		}
 	} // namespace
 
 	gumbo_child_range::gumbo_child_range( GumboNode const &parent_node )
 	  : m_first( get_first_child( parent_node ) )
-	  , m_last( parent_node ) {}
+	  , m_last( get_last_child( parent_node ) ) {}
 } // namespace daw::gumbo
