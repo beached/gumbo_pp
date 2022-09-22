@@ -3,6 +3,6 @@
 include(CMakeFindDependencyMacro)
 find_dependency( daw-header-libraries )
 
-include("${CMAKE_CURRENT_LIST_DIR}/daw-gumbo-pp-linkTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/daw-gumbo-pp-Targets.cmake")
 
 check_required_components( daw-gumbo-pp )

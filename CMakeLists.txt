@@ -29,13 +29,14 @@ endif ()
 
 find_package(PkgConfig REQUIRED)
 
-pkg_search_module(GUMBO gumbo)
-if (NOT GUMBO_FOUND)
+#pkg_search_module(GUMBO gumbo)
+# vcpkg gumbo doesn't set paths
+#if (NOT GUMBO_FOUND )
 	# VCPKG has no cmake or pkg config files for gumbo
 	find_path(GUMBO_INCLUDE_DIRS "gumbo.h" REQUIRED)
 	find_library(GUMBO_LIBRARIES gumbo REQUIRED)
 	cmake_path(GET GUMBO_LIBRARIES PARENT_PATH GUMBO_LIBRARY_DIRS)
-endif ()
+#endif ()
 
 include_directories(SYSTEM ${GUMBO_INCLUDE_DIRS})
 link_directories( ${GUMBO_LIBRARY_DIRS} )

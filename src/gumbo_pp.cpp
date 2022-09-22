@@ -13,6 +13,8 @@
 #include <daw/daw_move.h>
 #include <daw/daw_string_view.h>
 
+#include <iterator>
+
 namespace daw::gumbo::details {
 	void gumbo_pp_library( ) {}
 } // namespace daw::gumbo::details
