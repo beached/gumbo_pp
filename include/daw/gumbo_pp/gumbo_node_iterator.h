@@ -39,6 +39,12 @@ namespace daw::gumbo {
 			explicit children_t( ) = default;
 			explicit constexpr children_t( pointer n ) noexcept
 			  : node( n ) {}
+			~children_t() = default;
+			children_t( children_t const & ) noexcept = default;
+			children_t & operator=( children_t const & ) noexcept = default;
+			children_t( children_t && ) noexcept = default;
+			children_t & operator=( children_t && ) noexcept = default;
+
 
 		public:
 			constexpr std::size_t size( ) const {
