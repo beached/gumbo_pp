@@ -40,7 +40,7 @@ namespace daw::gumbo {
 		explicit constexpr gumbo_node_iterator_t( GumboNode const *node ) noexcept
 		  : m_node( node ) {}
 
-		explicit constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
+		constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
 		  : m_node( &node ) {}
 
 		[[nodiscard]] constexpr gumbo_node_iterator_t begin( ) const {
@@ -161,13 +161,12 @@ namespace daw::gumbo {
 		}
 	};
 
-
 	class gumbo_child_range {
 		gumbo_node_iterator_t m_first{ };
 		gumbo_node_iterator_t m_last{ };
 
 	public:
-		explicit gumbo_child_range( GumboNode const & parent_node );
+		explicit gumbo_child_range( GumboNode const &parent_node );
 
 		[[nodiscard]] inline gumbo_node_iterator_t begin( ) const {
 			return m_first;
@@ -177,4 +176,13 @@ namespace daw::gumbo {
 			return m_last;
 		}
 	};
+
+	template<typename Predicate>
+	constexpr void advance_until( gumbo_node_iterator_t &first,
+	                              gumbo_node_iterator_t const &last,
+	                              Predicate pred ) {
+		while( first != last and not pred( *first ) ) {
+			++first;
+		}
+	}
 } // namespace daw::gumbo

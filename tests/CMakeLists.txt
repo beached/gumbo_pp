@@ -21,3 +21,6 @@ add_executable( test_bin src/test.cpp )
 target_link_libraries( test_bin gumbo-pp_test )
 add_test( test_test test_bin )
 
+add_executable( table_scrape src/table_scrape.cpp )
+target_link_libraries( table_scrape gumbo-pp_test )
+add_test( table_scrape_test table_scrape )

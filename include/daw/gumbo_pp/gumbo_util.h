@@ -156,4 +156,25 @@ namespace daw::gumbo {
 		}
 		return { href->value };
 	}
+
+	constexpr daw::string_view to_string( GumboNodeType type ) {
+		switch( type ) {
+		case GUMBO_NODE_DOCUMENT:
+			return "Document";
+		case GumboNodeType::GUMBO_NODE_ELEMENT:
+			return "Element";
+		case GUMBO_NODE_TEXT:
+			return "Text";
+		case GUMBO_NODE_CDATA:
+			return "CData";
+		case GUMBO_NODE_COMMENT:
+			return "Comment";
+		case GUMBO_NODE_WHITESPACE:
+			return "Whitespace";
+		case GUMBO_NODE_TEMPLATE:
+			return "Template";
+		default:
+			std::terminate( );
+		}
+	}
 } // namespace daw::gumbo
