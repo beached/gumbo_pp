@@ -51,18 +51,15 @@ int main( ) {
 	auto tbl =
 	  std::find_if( parent_div.begin( ), parent_div.end( ), match::tag::TBODY );
 	assert( tbl != html.end( ) );
-	auto first = tbl.begin( );
-	auto const last = tbl.end( );
 	for( daw::gumbo::gumbo_node_iterator_t tr_it :
-	     daw::find_iterator( first, last, match::tag::TR ) ) {
+	     daw::find_iterator( tbl.first_child( ),
+	                         tbl.last_child( ),
+	                         match::tag::TR ) ) {
 		bool is_first_col = true;
 		for( daw::gumbo::gumbo_node_iterator_t td_it :
-		     daw::find_iterator( std::next( tr_it.begin( ) ),
-		                         tr_it.end( ),
-		                         match::tag::TD or match::tag::TR ) ) {
-			if( match::tag::TR( *td_it ) ) {
-				break;
-			}
+		     daw::find_iterator( tr_it.first_child( ),
+		                         tr_it.last_child( ),
+		                         match::tag::TD ) ) {
 			if( not is_first_col ) {
 				std::cout << ',';
 			}
@@ -71,6 +68,5 @@ int main( ) {
 			std::cout << daw::string_view( content ).trim( );
 		}
 		std::cout << '\n';
-		++first;
 	}
 }

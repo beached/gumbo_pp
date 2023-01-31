@@ -67,6 +67,49 @@ namespace daw::gumbo {
 			return m_node;
 		}
 
+		constexpr std::size_t get_child_count( ) const noexcept {
+			return get_children_count( *m_node );
+		}
+
+		constexpr gumbo_node_iterator_t first_child( ) const noexcept {
+			auto const child_count = get_children_count( *m_node );
+			if( child_count == 0 ) {
+				return gumbo_node_iterator_t{ };
+			}
+			return gumbo_node_iterator_t( get_child_node_at( *m_node, 0 ) );
+		}
+
+		constexpr gumbo_node_iterator_t last_child( ) const noexcept {
+			auto const child_count = get_children_count( *m_node );
+			if( child_count == 0 ) {
+				return gumbo_node_iterator_t{ };
+			}
+			auto *node = get_child_node_at( *m_node, child_count - 1 );
+			assert( node );
+			return std::next( gumbo_node_iterator_t( *node ) );
+		}
+
+		constexpr gumbo_node_iterator_t next_sibling( ) const noexcept {
+			auto cur_idx = m_node->parent->index_within_parent;
+			auto *parent = m_node->parent;
+			auto const max_idx = get_children_count( *parent );
+			if( cur_idx + 1 < max_idx ) {
+				// Parent node has more children left, choose next one
+				pointer next_child = get_child_node_at( *parent, cur_idx + 1 );
+				assert( next_child );
+				return gumbo_node_iterator_t( next_child );
+			}
+			return gumbo_node_iterator_t{ };
+		}
+
+		inline gumbo_node_iterator_t last_sibling( ) const noexcept {
+			auto *parent = m_node->parent;
+			auto const max_idx = get_children_count( *parent );
+			pointer next_child = get_child_node_at( *parent, max_idx - 1 );
+			assert( next_child );
+			return gumbo_node_iterator_t( next_child );
+		}
+
 		constexpr gumbo_node_iterator_t &operator++( ) &noexcept {
 			// iterate to lowest indexed child, then next children if any.  If no more
 			// children move to parent's, next child.
