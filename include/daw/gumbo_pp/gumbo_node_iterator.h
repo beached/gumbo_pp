@@ -32,16 +32,63 @@ namespace daw::gumbo {
 		using const_reference = GumboNode const &;
 
 	private:
-		pointer m_node = nullptr;
+		class children_t {
+			pointer node;
+			friend class gumbo_node_iterator_t;
+
+			explicit children_t( ) = default;
+			explicit constexpr children_t( pointer n ) noexcept
+			  : node( n ) {}
+
+		public:
+			constexpr std::size_t size( ) const {
+				if( not node ) {
+					return 0;
+				}
+				return get_children_count( *node );
+			}
+
+			inline reference operator[]( std::size_t idx ) const {
+				assert( node );
+				assert( idx < size( ) );
+				return *get_child_node_at( *node, idx );
+			}
+
+			constexpr gumbo_node_iterator_t begin( ) const noexcept {
+				if( not node ) {
+					return gumbo_node_iterator_t( );
+				}
+				auto const child_count = get_children_count( *node );
+				if( child_count == 0 ) {
+					return gumbo_node_iterator_t{ };
+				}
+				return gumbo_node_iterator_t( get_child_node_at( *node, 0 ) );
+			}
+
+			constexpr gumbo_node_iterator_t end( ) const noexcept {
+				if( not node ) {
+					return gumbo_node_iterator_t( );
+				}
+				auto const child_count = get_children_count( *node );
+				if( child_count == 0 ) {
+					return gumbo_node_iterator_t{ };
+				}
+				auto *child = get_child_node_at( *node, child_count - 1 );
+				assert( child );
+				return std::next( gumbo_node_iterator_t( *child ) );
+			}
+		};
 
 	public:
-		explicit constexpr gumbo_node_iterator_t( ) noexcept = default;
+		children_t children{ };
+
+		explicit gumbo_node_iterator_t( ) noexcept = default;
 
 		explicit constexpr gumbo_node_iterator_t( GumboNode const *node ) noexcept
-		  : m_node( node ) {}
+		  : children( node ) {}
 
 		constexpr gumbo_node_iterator_t( GumboNode const &node ) noexcept
-		  : m_node( &node ) {}
+		  : children( &node ) {}
 
 		[[nodiscard]] constexpr gumbo_node_iterator_t begin( ) const {
 			return *this;
@@ -52,70 +99,33 @@ namespace daw::gumbo {
 		}
 
 		[[nodiscard]] constexpr reference operator*( ) const noexcept {
-			assert( m_node );
-			return *m_node;
+			assert( children.node );
+			return *children.node;
 		}
 
 		[[nodiscard]] constexpr pointer get( ) const noexcept {
-			return m_node;
+			return children.node;
 		}
 
 		[[nodiscard]] constexpr explicit operator bool( ) const noexcept {
-			return static_cast<bool>( m_node );
+			return static_cast<bool>( children.node );
 		}
 
 		[[nodiscard]] constexpr pointer operator->( ) const {
-			assert( m_node );
-			return m_node;
+			assert( children.node );
+			return children.node;
 		}
 
 		constexpr gumbo_node_iterator_t parent( ) const noexcept {
-			if( not m_node or not m_node->parent ) {
+			if( not children.node or not children.node->parent ) {
 				return gumbo_node_iterator_t( );
 			}
-			return gumbo_node_iterator_t( *m_node->parent );
-		}
-
-		constexpr std::size_t size( ) const {
-			if( not m_node ) {
-				return 0;
-			}
-			return get_children_count( *m_node );
-		}
-
-		inline reference operator[]( std::size_t idx ) const {
-			assert( m_node );
-			assert( idx < size( ) );
-			return *get_child_node_at( *m_node, idx );
-		}
-
-		constexpr gumbo_node_iterator_t first_child( ) const noexcept {
-			if( not m_node ) {
-				return gumbo_node_iterator_t( );
-			}
-			auto const child_count = get_children_count( *m_node );
-			if( child_count == 0 ) {
-				return gumbo_node_iterator_t{ };
-			}
-			return gumbo_node_iterator_t( get_child_node_at( *m_node, 0 ) );
-		}
-
-		constexpr gumbo_node_iterator_t last_child( ) const noexcept {
-			if( not m_node ) {
-				return gumbo_node_iterator_t( );
-			}
-			auto const child_count = get_children_count( *m_node );
-			if( child_count == 0 ) {
-				return gumbo_node_iterator_t{ };
-			}
-			auto *node = get_child_node_at( *m_node, child_count - 1 );
-			assert( node );
-			return std::next( gumbo_node_iterator_t( *node ) );
+			return gumbo_node_iterator_t( *children.node->parent );
 		}
 
 		constexpr gumbo_node_iterator_t next_sibling( ) const noexcept {
-			auto cur_idx = m_node->parent->index_within_parent;
-			auto *parent = m_node->parent;
+			auto cur_idx = children.node->parent->index_within_parent;
+			auto *parent = children.node->parent;
 			if( not parent ) {
 				return gumbo_node_iterator_t( );
 			}
@@ -130,7 +140,7 @@ namespace daw::gumbo {
 		}
 
 		inline gumbo_node_iterator_t last_sibling( ) const noexcept {
-			auto *parent = m_node->parent;
+			auto *parent = children.node->parent;
 			if( not parent ) {
 				return gumbo_node_iterator_t( );
 			}
@@ -141,18 +151,18 @@ namespace daw::gumbo {
 		}
 
 		constexpr gumbo_node_iterator_t &operator++( ) &noexcept {
-			// iterate to lowest indexed child, then next children if any.  If no more
-			// children move to parent's, next child.
-			if( not m_node ) {
+			// iterate to lowest indexed child, then next children if any.  If no
+			// more children move to parent's, next child.
+			if( not children.node ) {
 				return *this;
 			}
-			daw::not_null<pointer> cur_node = m_node;
-			// Check if we have any children.  Will always be first because they will
-			// iterate through their parents children
+			daw::not_null<pointer> cur_node = children.node;
+			// Check if we have any children.  Will always be first because they
+			// will iterate through their parents children
 			if( get_children_count( *cur_node ) > 0 ) {
 				if( pointer child_node = get_child_node_at( *cur_node, 0 );
 				    child_node ) {
-					m_node = child_node;
+					children.node = child_node;
 					return *this;
 				}
 			}
@@ -161,7 +171,7 @@ namespace daw::gumbo {
 			while( true ) {
 				if( not cur_node->parent ) {
 					// We have no parent
-					m_node = nullptr;
+					children.node = nullptr;
 					return *this;
 				}
 				daw::not_null<pointer> parent = cur_node->parent;
@@ -171,7 +181,7 @@ namespace daw::gumbo {
 					// Parent node has more children left, choose next one
 					pointer next_child = get_child_node_at( *parent, cur_idx + 1 );
 					assert( next_child );
-					m_node = next_child;
+					children.node = next_child;
 					return *this;
 				}
 				// The parent node has no more children, move up tree
@@ -188,13 +198,13 @@ namespace daw::gumbo {
 		[[nodiscard]] friend constexpr bool
 		operator==( gumbo_node_iterator_t const &lhs,
 		            gumbo_node_iterator_t const &rhs ) noexcept {
-			return lhs.m_node == rhs.m_node;
+			return lhs.get( ) == rhs.get( );
 		}
 
 		[[nodiscard]] friend constexpr bool
 		operator!=( gumbo_node_iterator_t const &lhs,
 		            gumbo_node_iterator_t const &rhs ) noexcept {
-			return lhs.m_node != rhs.m_node;
+			return lhs.get( ) != rhs.get( );
 		}
 	};
 

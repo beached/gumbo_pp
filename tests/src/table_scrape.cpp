@@ -52,13 +52,13 @@ int main( ) {
 	  std::find_if( parent_div.begin( ), parent_div.end( ), match::tag::TBODY );
 	assert( tbl != html.end( ) );
 	for( daw::gumbo::gumbo_node_iterator_t tr_it :
-	     daw::find_iterator( tbl.first_child( ),
-	                         tbl.last_child( ),
+	     daw::find_iterator( tbl.children.begin( ),
+	                         tbl.children.end( ),
 	                         match::tag::TR ) ) {
 		bool is_first_col = true;
 		for( daw::gumbo::gumbo_node_iterator_t td_it :
-		     daw::find_iterator( tr_it.first_child( ),
-		                         tr_it.last_child( ),
+		     daw::find_iterator( tr_it.children.begin( ),
+		                         tr_it.children.end( ),
 		                         match::tag::TD ) ) {
 			if( not is_first_col ) {
 				std::cout << ',';
