@@ -52,6 +52,7 @@ namespace daw::gumbo {
 		}
 
 		[[nodiscard]] constexpr reference operator*( ) const noexcept {
+			assert( m_node );
 			return *m_node;
 		}
 
@@ -64,14 +65,34 @@ namespace daw::gumbo {
 		}
 
 		[[nodiscard]] constexpr pointer operator->( ) const {
+			assert( m_node );
 			return m_node;
 		}
 
-		constexpr std::size_t get_child_count( ) const noexcept {
+		constexpr gumbo_node_iterator_t parent( ) const noexcept {
+			if( not m_node or not m_node->parent ) {
+				return gumbo_node_iterator_t( );
+			}
+			return gumbo_node_iterator_t( *m_node->parent );
+		}
+
+		constexpr std::size_t size( ) const {
+			if( not m_node ) {
+				return 0;
+			}
 			return get_children_count( *m_node );
 		}
 
+		inline reference operator[]( std::size_t idx ) const {
+			assert( m_node );
+			assert( idx < size( ) );
+			return *get_child_node_at( *m_node, idx );
+		}
+
 		constexpr gumbo_node_iterator_t first_child( ) const noexcept {
+			if( not m_node ) {
+				return gumbo_node_iterator_t( );
+			}
 			auto const child_count = get_children_count( *m_node );
 			if( child_count == 0 ) {
 				return gumbo_node_iterator_t{ };
@@ -80,6 +101,9 @@ namespace daw::gumbo {
 		}
 
 		constexpr gumbo_node_iterator_t last_child( ) const noexcept {
+			if( not m_node ) {
+				return gumbo_node_iterator_t( );
+			}
 			auto const child_count = get_children_count( *m_node );
 			if( child_count == 0 ) {
 				return gumbo_node_iterator_t{ };
@@ -92,6 +116,9 @@ namespace daw::gumbo {
 		constexpr gumbo_node_iterator_t next_sibling( ) const noexcept {
 			auto cur_idx = m_node->parent->index_within_parent;
 			auto *parent = m_node->parent;
+			if( not parent ) {
+				return gumbo_node_iterator_t( );
+			}
 			auto const max_idx = get_children_count( *parent );
 			if( cur_idx + 1 < max_idx ) {
 				// Parent node has more children left, choose next one
@@ -104,6 +131,9 @@ namespace daw::gumbo {
 
 		inline gumbo_node_iterator_t last_sibling( ) const noexcept {
 			auto *parent = m_node->parent;
+			if( not parent ) {
+				return gumbo_node_iterator_t( );
+			}
 			auto const max_idx = get_children_count( *parent );
 			pointer next_child = get_child_node_at( *parent, max_idx - 1 );
 			assert( next_child );
