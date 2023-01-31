@@ -64,8 +64,7 @@ int main( ) {
 				std::cout << ',';
 			}
 			is_first_col = false;
-			auto content = daw::gumbo::node_content_text( *td_it );
-			std::cout << daw::string_view( content ).trim( );
+			std::cout << daw::gumbo::node_content_text( *td_it );
 		}
 		std::cout << '\n';
 	}
