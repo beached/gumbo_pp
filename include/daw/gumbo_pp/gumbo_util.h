@@ -140,7 +140,7 @@ namespace daw::gumbo {
 			return 0U;
 		}
 		default:
-			return std::char_traits<char>::length( node.v.text.text );
+			return static_cast<unsigned>(std::char_traits<char>::length(node.v.text.text));
 		}
 	}
 
