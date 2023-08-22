@@ -34,7 +34,7 @@ namespace daw::gumbo {
 	private:
 		class children_t {
 			pointer node;
-			friend class gumbo_node_iterator_t;
+			friend struct gumbo_node_iterator_t;
 
 			explicit children_t( ) = default;
 			explicit constexpr children_t( pointer n ) noexcept
