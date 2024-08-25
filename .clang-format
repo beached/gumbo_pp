@@ -1,4 +1,3 @@
-BasedOnStyle: LLVM
 AccessModifierOffset: -2
 AlignAfterOpenBracket: "true"
 AlignEscapedNewlines: Left
@@ -13,11 +12,13 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: Yes
-SpaceAfterTemplateKeyword: false
-BinPackArguments: true
-BinPackParameters: true
+BasedOnStyle: LLVM
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
 BreakBeforeTernaryOperators: true
+BreakConstructorInitializersBeforeComma: true
 ColumnLimit: 80
 CommentPragmas: '^ IWYU pragma:'
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
@@ -45,6 +46,7 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: Never
 SpaceInEmptyParentheses: true
@@ -57,10 +59,4 @@ SpacesInSquareBrackets: false
 Standard: c++17
 TabWidth: 2
 UseTab: ForIndentation
-BreakConstructorInitializersBeforeComma: true
-AllowAllConstructorInitializersOnNextLine: true
-BreakInheritanceList: AfterColon
-AllowAllParametersOfDeclarationOnNextLine: false
-BinPackParameters: false
-BinPackArguments: false
-AllowAllArgumentsOnNextLine: false
+AllowShortLambdasOnASingleLine: Empty

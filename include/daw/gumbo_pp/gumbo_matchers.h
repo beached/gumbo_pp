@@ -14,12 +14,14 @@
 #include "gumbo_text.h"
 
 #include <daw/daw_logic.h>
+#include <daw/daw_move.h>
 #include <daw/daw_string_view.h>
 #include <daw/daw_tuple2.h>
 
 #include <cstddef>
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 namespace daw::gumbo {
 	// A combined predicate that returns true when all of it's predicates return
@@ -29,10 +31,10 @@ namespace daw::gumbo {
 		daw::tuple2<Matchers...> m_matchers;
 
 		constexpr match_all( daw::tuple2<Matchers...> &&m )
-		  : m_matchers( DAW_MOVE( m ) ) {}
+		  : m_matchers( std::move( m ) ) {}
 
 		explicit constexpr match_all( Matchers &&...matchers )
-		  : m_matchers{ DAW_MOVE( matchers )... } {}
+		  : m_matchers{ std::move( matchers )... } {}
 
 		explicit constexpr match_all( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
@@ -65,10 +67,10 @@ namespace daw::gumbo {
 		daw::tuple2<Matchers...> m_matchers;
 
 		constexpr match_any( daw::tuple2<Matchers...> &&m )
-		  : m_matchers( DAW_MOVE( m ) ) {}
+		  : m_matchers( std::move( m ) ) {}
 
 		explicit constexpr match_any( Matchers &&...matchers )
-		  : m_matchers{ DAW_MOVE( matchers )... } {}
+		  : m_matchers{ std::move( matchers )... } {}
 
 		explicit constexpr match_any( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
@@ -101,10 +103,10 @@ namespace daw::gumbo {
 		daw::tuple2<Matchers...> m_matchers;
 
 		constexpr match_one( daw::tuple2<Matchers...> &&m )
-		  : m_matchers( DAW_MOVE( m ) ) {}
+		  : m_matchers( std::move( m ) ) {}
 
 		explicit constexpr match_one( Matchers &&...matchers )
-		  : m_matchers{ DAW_MOVE( matchers )... } {}
+		  : m_matchers{ std::move( matchers )... } {}
 
 		explicit constexpr match_one( Matchers const &...matchers )
 		  : m_matchers{ matchers... } {}
@@ -136,7 +138,7 @@ namespace daw::gumbo {
 
 	public:
 		explicit constexpr match_not( Matcher &&matcher )
-		  : Matcher{ DAW_MOVE( matcher ) } {}
+		  : Matcher{ std::move( matcher ) } {}
 
 		explicit constexpr match_not( Matcher const &matcher )
 		  : Matcher{ matcher } {}
@@ -272,12 +274,11 @@ namespace daw::gumbo::match_details {
 						  return false;
 					  }
 					  return name == attribute_name and
-					         std::find_if( first,
-					                       last,
-					                       [&]( daw::string_view value_substr ) {
-						                       return value.find( value_substr ) !=
-						                              daw::string_view::npos;
-					                       } ) != last;
+					         std::find_if(
+					           first, last, [&]( daw::string_view value_substr ) {
+						           return value.find( value_substr ) !=
+						                  daw::string_view::npos;
+					           } ) != last;
 				  } );
 			}
 
@@ -313,11 +314,10 @@ namespace daw::gumbo::match_details {
 						  return false;
 					  }
 					  return name == attribute_name and
-					         std::find_if( first,
-					                       last,
-					                       [&]( daw::string_view value_prefix ) {
-						                       return value.starts_with( value_prefix );
-					                       } ) != last;
+					         std::find_if(
+					           first, last, [&]( daw::string_view value_prefix ) {
+						           return value.starts_with( value_prefix );
+					           } ) != last;
 				  } );
 			}
 
@@ -351,11 +351,10 @@ namespace daw::gumbo::match_details {
 						  return false;
 					  }
 					  return name == attribute_name and
-					         std::find_if( first,
-					                       last,
-					                       [&]( daw::string_view value_prefix ) {
-						                       return value.ends_with( value_prefix );
-					                       } ) != last;
+					         std::find_if(
+					           first, last, [&]( daw::string_view value_prefix ) {
+						           return value.ends_with( value_prefix );
+					           } ) != last;
 				  } );
 			}
 

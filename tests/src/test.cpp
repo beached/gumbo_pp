@@ -83,6 +83,7 @@ int main( ) {
 	                            html2.data( ),
 	                            html2.size( ) );
 	auto html2_rng = daw::gumbo::gumbo_node_iterator_t( html2_hnd->root );
+
 	auto html2_example_pos =
 	  std::find_if( html2_rng.begin( ),
 	                html2_rng.end( ),

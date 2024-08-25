@@ -59,7 +59,7 @@ namespace daw::gumbo::details {
 			return m_node;
 		}
 
-		constexpr gumbo_text_iterator_t &operator++( ) &noexcept {
+		constexpr gumbo_text_iterator_t &operator++( ) & noexcept {
 			// iterate to lowest indexed child, then next children if any.  If no more
 			// children move to parent's, next child.
 			if( not m_node ) {
@@ -98,7 +98,7 @@ namespace daw::gumbo::details {
 			}
 		}
 
-		[[nodiscard]] constexpr gumbo_text_iterator_t operator++( int ) &noexcept {
+		[[nodiscard]] constexpr gumbo_text_iterator_t operator++( int ) & noexcept {
 			gumbo_text_iterator_t result = *this;
 			operator++( );
 			return result;

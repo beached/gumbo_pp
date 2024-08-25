@@ -34,17 +34,16 @@ namespace daw::gumbo {
 	private:
 		class children_t {
 			pointer node;
-			friend class gumbo_node_iterator_t;
+			friend struct gumbo_node_iterator_t;
 
 			explicit children_t( ) = default;
 			explicit constexpr children_t( pointer n ) noexcept
 			  : node( n ) {}
-			~children_t() = default;
+			~children_t( ) = default;
 			children_t( children_t const & ) noexcept = default;
-			children_t & operator=( children_t const & ) noexcept = default;
+			children_t &operator=( children_t const & ) noexcept = default;
 			children_t( children_t && ) noexcept = default;
-			children_t & operator=( children_t && ) noexcept = default;
-
+			children_t &operator=( children_t && ) noexcept = default;
 
 		public:
 			constexpr std::size_t size( ) const {
@@ -156,7 +155,7 @@ namespace daw::gumbo {
 			return gumbo_node_iterator_t( next_child );
 		}
 
-		constexpr gumbo_node_iterator_t &operator++( ) &noexcept {
+		constexpr gumbo_node_iterator_t &operator++( ) & noexcept {
 			// iterate to lowest indexed child, then next children if any.  If no
 			// more children move to parent's, next child.
 			if( not children.node ) {
@@ -195,7 +194,7 @@ namespace daw::gumbo {
 			}
 		}
 
-		[[nodiscard]] constexpr gumbo_node_iterator_t operator++( int ) &noexcept {
+		[[nodiscard]] constexpr gumbo_node_iterator_t operator++( int ) & noexcept {
 			gumbo_node_iterator_t result = *this;
 			operator++( );
 			return result;
